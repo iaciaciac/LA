@@ -11,7 +11,7 @@ const Mylifec = () => {
 
         </div>
 
-        <div className="text-xs font-light tracking-wide leading-relaxed antialiased text-font-700 dark:text-gray-400">
+        <div className="text-xs font-light tracking-wide leading-relaxed antialiased">
           © 2026 Not studio.
         </div>
       </div>
@@ -27,7 +27,7 @@ const Mylifec = () => {
 
         <div className="break-normal md:break-all text-left">
 
-          <a href="mailto:i@caicaicai.me" className="hover:no-underline text-xs font-light tracking-wide leading-relaxed antialiased text-font-700 dark:text-gray-400 mr-10">
+          <a href="mailto:i@caicaicai.me" className="hover:no-underline text-xs font-light tracking-wide leading-relaxed antialiased mr-10">
             Email
           </a>
         </div>
