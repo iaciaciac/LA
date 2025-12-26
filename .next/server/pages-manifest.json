@@ -1,10 +1,9 @@
 {
   "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/Citywalk": "pages/Citywalk.js",
-  "/Belike": "pages/Belike.js",
-  "/api/running": "pages/api/running.js",
+  "/_error": "pages/_error.js",
   "/": "pages/index.js",
-  "/photos": "pages/photos.js"
+  "/photos": "pages/photos.js",
+  "/Belike": "pages/Belike.js",
+  "/api/running": "pages/api/running.js"
 }
