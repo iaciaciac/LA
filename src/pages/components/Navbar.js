@@ -7,11 +7,11 @@ const Navbar = () => {
       <nav className="flex items-center justify-between w-full px-6 py-6 md:px-12" role="navigation">
         <div className="flex-shrink-0">
           <Link href="/">
-            <span className="font-bold text-lg tracking-widest text-black dark:text-white uppercase">CAICAI</span>
+            <span className="font-bold text-lg tracking-widest uppercase">CAICAI</span>
           </Link>
         </div>
 
-        <div className="flex gap-8 text-sm font-medium text-black dark:text-white">
+        <div className="flex gap-8 text-sm font-medium">
           <Link href="/">
             <span className="relative opacity-70 hover:opacity-100 transition-opacity">Home</span>
           </Link>

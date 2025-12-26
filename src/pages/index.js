@@ -16,7 +16,7 @@ import { client } from '../sanity/lib/client';
 
 function Index({ headline }) {
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white transition-colors duration-500">
+    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500">
       <Navbar />
       <Mylife headline={headline} />
       <RunStats />
