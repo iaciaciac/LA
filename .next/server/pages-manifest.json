@@ -2,8 +2,9 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/photos": "pages/photos.js",
+  "/Citywalk": "pages/Citywalk.js",
   "/Belike": "pages/Belike.js",
   "/api/running": "pages/api/running.js",
-  "/": "pages/index.js"
+  "/": "pages/index.js",
+  "/photos": "pages/photos.js"
 }

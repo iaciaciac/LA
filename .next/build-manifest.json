@@ -25,6 +25,11 @@
       "static/chunks/main.js",
       "static/chunks/pages/Belike.js"
     ],
+    "/Citywalk": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/Citywalk.js"
+    ],
     "/_app": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",

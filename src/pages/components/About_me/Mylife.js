@@ -23,12 +23,13 @@ const Typewriter = ({ text, delay = 50 }) => {
   );
 };
 
-function Mylife() {
+function Mylife({ headline }) {
+  const displayHeadline = headline || "Work out to look good naked.";
   return (
     <div className="flex items-center justify-center h-full">
       <div className="block md:py-16 lg:px-16 xl:px-40 2xl:px-48" style={{ marginLeft: '24px', marginRight: '24px' }}>
         <div className="page-title font-light text-3xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl tracking-tight text-black dark:text-white min-h-[1.2em]" style={{ marginBottom: '200px', marginTop: '150px' }}>
-          <Typewriter text="Work out to look good naked." delay={60} />
+          <Typewriter text={displayHeadline} delay={60} />
         </div>
       </div>
     </div>
