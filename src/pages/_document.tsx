@@ -1,4 +1,4 @@
-// Forced rebuild for production sync
+// Forced rebuild// Build trigger: 2024-03-27-01
 import { Html, Head, Main, NextScript } from 'next/document'
 
 export default function Document() {
