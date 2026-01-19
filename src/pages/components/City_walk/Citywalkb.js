@@ -45,8 +45,8 @@ const Citywalkb = () => {
                 <div className="w-full h-auto">
                   <Image
                     alt="twitter"
-                    srcSet="/images/look_photos_.png"
-                    src="/images/look_photos_.png"
+                    srcSet="/images/look_photos_.jpg"
+                    src="/images/look_photos_.jpg"
                     width="500"
                     height="400"
                     className="rounded-xl w-full h-auto object-cover mx-auto"
@@ -103,8 +103,8 @@ const Citywalkb = () => {
                 <div className="w-full h-auto">
                   <Image
                     alt="toome"
-                    srcSet="/images/IMG_1802_Original.jpg"
-                    src="/images/IMG_1802_Original.jpg"
+                    srcSet="/images/IMG_1802_Original.JPG"
+                    src="/images/IMG_1802_Original.JPG"
                     width="900"
                     height="600"
                     className="rounded-xl w-full h-auto object-cover mx-auto"

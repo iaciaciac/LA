@@ -1,5 +1,6 @@
 import React from 'react';
 import Navbar from './components/Navbar';
+
 import DarkModeToggle from './components/DarkModeToggle';
 import Mylife from './components/About_me/Mylife';
 import RunStats from './components/RunStats';
@@ -13,11 +14,14 @@ import Mylifec from './components/About_me/Mylifec';
 
 
 import { client } from '../sanity/lib/client';
+import useScrollRestoration from '../hooks/useScrollRestoration';
 
 function Index({ headline }) {
+  useScrollRestoration();
   return (
     <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500">
       <Navbar />
+
       <Mylife headline={headline} />
       <RunStats />
 
@@ -28,6 +32,7 @@ function Index({ headline }) {
 
 export async function getStaticProps() {
   const settings = await client.fetch(`*[_type == "siteSettings"][0]`);
+  // const settings = { headline: "Debug Headline" };
   return {
     props: {
       headline: settings?.headline || "Work out to look good naked."

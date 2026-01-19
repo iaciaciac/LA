@@ -12,7 +12,7 @@ const Mylifec = () => {
         </div>
 
         <div className="text-xs font-light tracking-wide leading-relaxed antialiased">
-          © 2026 Not studio.
+          © {new Date().getFullYear()} Not studio.
         </div>
       </div>
       <div className="flex items-center">

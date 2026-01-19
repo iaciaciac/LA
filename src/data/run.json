@@ -1,0 +1,57 @@
+[
+    {
+        "id": 170005,
+        "name": "Morning Run",
+        "distance": 5020,
+        "moving_time": 1657,
+        "elapsed_time": 1700,
+        "type": "Run",
+        "start_date": "2026-01-02T07:30:00Z",
+        "average_speed": 3.03,
+        "max_speed": 4.5
+    },
+    {
+        "id": 170004,
+        "name": "New Year's Eve Run",
+        "distance": 10000,
+        "moving_time": 3200,
+        "elapsed_time": 3250,
+        "type": "Run",
+        "start_date": "2025-12-31T16:15:00Z",
+        "average_speed": 3.125,
+        "max_speed": 4.8
+    },
+    {
+        "id": 170003,
+        "name": "Evening Run",
+        "distance": 3150,
+        "moving_time": 1087,
+        "elapsed_time": 1100,
+        "type": "Run",
+        "start_date": "2025-12-29T18:15:00Z",
+        "average_speed": 2.9,
+        "max_speed": 4.0
+    },
+    {
+        "id": 170002,
+        "name": "Christmas Run",
+        "distance": 6000,
+        "moving_time": 1980,
+        "elapsed_time": 2050,
+        "type": "Run",
+        "start_date": "2025-12-25T08:00:00Z",
+        "average_speed": 3.03,
+        "max_speed": 4.2
+    },
+    {
+        "id": 170001,
+        "name": "Winter Solstice Run",
+        "distance": 8500,
+        "moving_time": 2800,
+        "elapsed_time": 2900,
+        "type": "Run",
+        "start_date": "2025-12-22T06:45:00Z",
+        "average_speed": 3.03,
+        "max_speed": 4.4
+    }
+]
