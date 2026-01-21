@@ -4,6 +4,7 @@ const nextConfig = {
   images: {
     domains: ['cdn.sanity.io'],
   },
+  transpilePackages: ['@uiw/react-codemirror', '@codemirror/state', '@marijn/find-cluster-break'],
   async redirects() {
     return [
       {

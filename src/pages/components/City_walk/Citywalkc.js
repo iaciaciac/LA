@@ -1,7 +1,10 @@
 import React from 'react';
 import ScrollAnimation from '../ScrollAnimation';
 
-const Citywalk = () => {
+const Citywalk = ({ introImage, projectImage }) => {
+  const introSrc = introImage || "/images/look_photos_.jpg";
+  const projectSrc = projectImage || "/images/IMG_1802_Original.JPG";
+
   return (
     <div>
       <div className="block">
@@ -34,7 +37,7 @@ const Citywalk = () => {
                   <div className="w-full h-auto">
                     <img
                       alt="twitter"
-                      src="/images/look_photos_.jpg"
+                      src={introSrc}
                       width="500"
                       height="400"
                       className="rounded-xl w-full h-auto object-cover mx-auto"
@@ -81,7 +84,7 @@ const Citywalk = () => {
                   <div className="w-full h-auto">
                     <img
                       alt="toome"
-                      src="/images/IMG_1802_Original.JPG"
+                      src={projectSrc}
                       width="900"
                       height="600"
                       className="rounded-xl w-full h-auto object-cover mx-auto"

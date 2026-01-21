@@ -4,11 +4,11 @@ import PhotoGallery from './components/PhotoGallery';
 import StoryTray from './components/StoryTray';
 import { client } from '../sanity/lib/client';
 import { groq } from 'next-sanity';
-import useScrollRestoration from '../hooks/useScrollRestoration';
+
 
 // DAMN Page Component / DAMN 页面组件
 function CaiDamn({ photos }) {
-  useScrollRestoration();
+
   const [selectedPhoto, setSelectedPhoto] = React.useState(null);
 
   // Filter photos for StoryTray - must have tags
@@ -57,6 +57,28 @@ export const getStaticProps = async () => {
     video {
       asset->{
         url
+      }
+    },
+    gallery[] {
+      title,
+      mediaType,
+      isLivePhoto,
+      image {
+        asset->{
+          url,
+          metadata {
+            dimensions {
+              width,
+              height,
+              aspectRatio
+            }
+          }
+        }
+      },
+      video {
+        asset->{
+          url
+        }
       }
     },
     isLivePhoto,

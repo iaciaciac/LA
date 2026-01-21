@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaHeartbeat, FaRunning, FaBolt, FaStream, FaTrophy, FaLightbulb, FaArrowUp, FaArrowDown, FaCheckCircle } from 'react-icons/fa';
 import ScrollAnimation from './ScrollAnimation';
@@ -134,7 +134,7 @@ const AnalysisInsight = ({ type, data, baseline }) => {
 
 
 const AnalysisCard = ({ title, subtitle, icon: Icon, children, className = "", insightType, insightData, insightBaseline, headerColor = "text-white" }) => (
-    <div className={`bg-zinc-900/50 rounded-[32px] p-8 border border-zinc-800 shadow-sm backdrop-blur-sm flex flex-col transition-transform duration-300 hover:scale-[1.01] active:scale-[0.99] transform-gpu ${className}`}>
+    <div className={`bg-zinc-900/50 rounded-2xl md:rounded-[32px] p-5 md:p-8 border border-zinc-800 shadow-sm backdrop-blur-sm flex flex-col transition-transform duration-300 hover:scale-[1.01] active:scale-[0.99] transform-gpu overflow-hidden w-full max-w-full ${className}`}>
         <div className="flex items-start justify-between mb-8">
             <div>
                 <h3 className={`text-lg font-bold ${headerColor} flex items-center gap-2`}>
@@ -156,124 +156,151 @@ const AnalysisCard = ({ title, subtitle, icon: Icon, children, className = "", i
 );
 
 const CoachPrescription = ({ data, baselines }) => {
+    // Helper to format decimal pace to mm'ss"
+    const formatPace = (decimalPace) => {
+        if (!decimalPace || decimalPace === Infinity) return "-";
+        const mins = Math.floor(decimalPace);
+        const secs = Math.round((decimalPace - mins) * 60);
+        return `${mins}'${secs < 10 ? '0' : ''}${secs}"`;
+    };
+
     const prescription = useMemo(() => {
-        if (!data || data.length < 2) return null;
+        if (!data || data.length < 5) return null; // Need slightly more data for robust calc
 
         const lastRun = data[data.length - 1];
-        const avgLoad = data.reduce((acc, r) => acc + r.rawLoad, 0) / data.length;
-        const recentAvgSpm = data.slice(-3).reduce((acc, r) => acc + r.spm, 0) / 3;
-        const recentAvgEf = data.slice(-3).reduce((acc, r) => acc + r.ef, 0) / 3;
-        const efTrend = recentAvgEf > baselines.avgEf;
+        const recentRuns = data.slice(-5); // Look at last 5 runs for context
 
-        // 1. FATIGUE CHECK (High Priority)
+        // 1. Calculate Statistics
+        const avgLoad = data.reduce((acc, r) => acc + r.rawLoad, 0) / data.length;
+        const avgDist = recentRuns.reduce((acc, r) => acc + r.distKm, 0) / recentRuns.length;
+        const maxDistRecent = Math.max(...recentRuns.map(r => r.distKm));
+
+        const recentAvgSpm = recentRuns.reduce((acc, r) => acc + r.spm, 0) / recentRuns.length;
+        const recentAvgEf = data.slice(-3).reduce((acc, r) => acc + r.ef, 0) / 3;
+        const efTrend = recentAvgEf > baselines.avgEf * 1.02; // Significant improvement (>2%)
+
+        // Smart Pace Calculation (Avg pace of runs with Good EF)
+        const goodRuns = data.filter(r => r.ef > baselines.avgEf);
+        const smartAerobicPace = goodRuns.length > 0
+            ? goodRuns.reduce((acc, r) => acc + r.paceAvg, 0) / goodRuns.length
+            : (lastRun.paceAvg || 6.0) * 1.05;
+
+        // --- PRESCRIPTION LOGIC (LOCALIZED) ---
+
+        // A. FATIGUE IS HIGH (Load Management)
         if (lastRun.rawLoad > avgLoad * 1.5) {
+            const recoveryDist = Math.max(3, Math.round(avgDist * 0.4)); // 40% of average distance
             return {
-                type: "恢复跑 (Recovery)",
+                type: "Recovery Run",
+                typeCN: "主动恢复跑",
                 icon: FaHeartbeat,
-                color: "text-[#FA114F]",
-                bg: "bg-[#FA114F]/10",
-                border: "border-[#FA114F]/20",
-                dist: "3 - 5 KM",
-                pace: "不限配速",
-                spm: "自然放松",
-                reason: "检测到上一场训练负荷较大，身体需要修复。请务必压低心率，完全放松跑。",
-                focus: "Zone 1 心率区间"
+                color: "text-[#ff2d55]",
+                bg: "bg-[#ff2d55]",
+                dist: `${recoveryDist} KM`,
+                pace: "轻松慢跑",
+                spm: "Relaxed",
+                reason: `检测到上一场训练负荷较高（Load ${Math.round(lastRun.rawLoad)}），身体处于疲劳期。建议进行极轻松的恢复跑，促进血液循环。`,
+                focus: "心率 < 135 bpm"
             };
         }
 
-        // 2. FORM CHECK (Medium Priority)
+        // B. FORM & CADENCE (Technical Correction)
         if (recentAvgSpm < 168) {
             return {
-                type: "步频专项训练 (Cadence Drill)",
+                type: "Cadence Drill",
+                typeCN: "步频专项训练",
                 icon: FaRunning,
-                color: "text-[#FDB927]",
-                bg: "bg-[#FDB927]/10",
-                border: "border-[#FDB927]/20",
-                dist: "8 KM",
-                pace: "稳态配速",
-                spm: "175+",
-                reason: "近期步频偏低。低步频会显著增加膝盖压力。本次训练不追求速度，只专注于双腿高频切换。",
+                color: "text-[#ffd60a]",
+                bg: "bg-[#ffd60a]",
+                dist: `${Math.round(avgDist)} KM`,
+                pace: formatPace(smartAerobicPace),
+                spm: "175 - 180",
+                reason: "近期平均步频偏低，在此配速下可能增加膝盖压力。本课表不追求速度，请专注于加快双腿交替节奏。",
                 focus: "小步幅，快节奏"
             };
         }
 
-        // 3. FITNESS PROGRESSION (Standard)
+        // C. PROGRESSIVE OVERLOAD (Long Run) - If EF is good, we build volume
         if (efTrend) {
+            // Progressive Overload: 10% more than recent max, capped reasonably
+            const targetLongRun = Math.min(Math.round(maxDistRecent * 1.1), 35);
             return {
-                type: "有氧耐力 (Long Run)",
+                type: "Long Run",
+                typeCN: "长距离耐力 (LSD)",
                 icon: FaTrophy,
-                color: "text-[#92E12C]",
-                bg: "bg-[#92E12C]/10",
-                border: "border-[#92E12C]/20",
-                dist: "12 - 15 KM",
-                pace: "稳定有氧配速",
-                spm: "180",
-                reason: "您的有氧效率正在提升，状态极佳。适合进行长距离训练以巩固有氧基础。",
+                color: "text-[#32d74b]",
+                bg: "bg-[#32d74b]",
+                dist: `${targetLongRun} KM`,
+                pace: formatPace(smartAerobicPace),
+                spm: "180+",
+                reason: `有氧效率持续提升 (+${((recentAvgEf / baselines.avgEf - 1) * 100).toFixed(1)}%)，心肺能力已准备好迎接更大挑战。建议增加跑量以巩固耐力基础。`,
                 focus: "后半程维持配速"
             };
         }
 
-        // 4. BASE BUILDING (Default)
+        // D. BASE BUILDING (Maintenance)
         return {
-            type: "基础有氧 (Base Building)",
+            type: "Base Run",
+            typeCN: "有氧基础跑",
             icon: FaCheckCircle,
-            color: "text-[#92E12C]",
-            bg: "bg-[#92E12C]/10",
-            border: "border-[#92E12C]/20",
-            dist: "10 KM",
-            pace: "轻松跑",
-            spm: "175-180",
-            reason: "状态稳定。保持当前的训练节奏，积累跑量是变强的唯一捷径。",
-            focus: "轻松，享受跑步"
+            color: "text-[#32d74b]",
+            bg: "bg-[#32d74b]",
+            dist: `${Math.round(avgDist * 1.1)} KM`, // Slight bump from average
+            pace: formatPace(smartAerobicPace * 1.02), // Strictly aerobic (slightly slower)
+            spm: "175+",
+            reason: "当前状态稳定。请保持规律训练，在舒适的有氧区间积累跑量，稳步扩大有氧底座。",
+            focus: "轻松，享受节奏"
         };
     }, [data, baselines]);
 
     if (!prescription) return null;
 
     return (
-        <div className="mb-8">
-            <div className={`relative overflow-hidden rounded-[32px] p-8 border ${prescription.bg} ${prescription.border} backdrop-blur-sm transition-transform duration-300 hover:scale-[1.005]`}>
-                {/* Background Decor */}
-                <div className={`absolute -right-10 -top-10 w-64 h-64 rounded-full ${prescription.bg} blur-3xl opacity-20 pointer-events-none`}></div>
-
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className={`p-3 rounded-full bg-white dark:bg-black/30 shadow-sm ${prescription.color}`}>
-                            <prescription.icon className="text-xl" />
+        <div className="mb-8 group">
+            <div className="relative overflow-hidden rounded-[32px] p-8 md:p-10 bg-[#1c1c1e] border border-white/5 transition-transform duration-500 hover:scale-[1.01]">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-10 relative z-10">
+                    <div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">AI 智能教练推荐</span>
                         </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 tracking-wider uppercase">AI 教练推荐 (Next Workout)</h3>
-                            <h2 className={`text-2xl md:text-3xl font-black ${prescription.color} mt-1`}>{prescription.type}</h2>
-                        </div>
+                        <h2 className="text-4xl md:text-5xl font-semibold text-white tracking-tight">{prescription.type}</h2>
+                        <p className="text-lg text-zinc-400 mt-2 font-medium">{prescription.typeCN}</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        {/* Target: Distance */}
-                        <div className="bg-white/60 dark:bg-black/20 rounded-2xl p-4 border border-white/20 dark:border-white/5 backdrop-blur-md">
-                            <span className="text-xs font-bold text-gray-500 uppercase">计划距离</span>
-                            <div className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tabular-nums mt-1">{prescription.dist}</div>
-                        </div>
-                        {/* Target: Pace */}
-                        <div className="bg-white/60 dark:bg-black/20 rounded-2xl p-4 border border-white/20 dark:border-white/5 backdrop-blur-md">
-                            <span className="text-xs font-bold text-gray-500 uppercase">建议配速</span>
-                            <div className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tabular-nums mt-1">{prescription.pace}</div>
-                        </div>
-                        {/* Target: Focus */}
-                        <div className="bg-white/60 dark:bg-black/20 rounded-2xl p-4 border border-white/20 dark:border-white/5 backdrop-blur-md">
-                            <span className="text-xs font-bold text-gray-500 uppercase">关键指标</span>
-                            <div className={`text-2xl md:text-3xl font-black ${prescription.color} tabular-nums mt-1`}>{prescription.spm}</div>
-                        </div>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${prescription.color.replace('text-', 'bg-')}/10 border border-white/5`}>
+                        <prescription.icon className={`text-xl ${prescription.color}`} />
                     </div>
+                </div>
 
-                    <div className="flex items-start gap-4 p-4 rounded-xl bg-white/40 dark:bg-white/5 border border-white/10">
-                        <FaLightbulb className={`${prescription.color} mt-1 shrink-0`} />
-                        <div>
-                            <h4 className={`text-sm font-bold ${prescription.color} mb-1`}>推荐理由</h4>
-                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium text-balance">
-                                {prescription.reason} <span className="opacity-70">本次训练核心关注：{prescription.focus}</span>
-                            </p>
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 relative z-10 border-t border-white/5 pt-8">
+                    {/* Target: Distance */}
+                    <div>
+                        <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">计划距离 (Distance)</span>
+                        <div className="text-3xl md:text-4xl font-semibold text-white tabular-nums tracking-tight">{prescription.dist}</div>
+                    </div>
+                    {/* Target: Pace */}
+                    <div>
+                        <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">建议配速 (Pace)</span>
+                        <div className="flex items-baseline gap-1">
+                            <div className="text-3xl md:text-4xl font-semibold text-white tabular-nums tracking-tight">{prescription.pace}</div>
+                            {prescription.pace.includes("'") && <span className="text-sm text-zinc-500 font-medium">/km</span>}
                         </div>
                     </div>
+                    {/* Target: Focus */}
+                    <div>
+                        <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">训练重点 (Focus)</span>
+                        <div className={`text-3xl md:text-4xl font-semibold tracking-tight ${prescription.color}`}>{prescription.focus}</div>
+                    </div>
+                </div>
+
+                {/* Footer Note */}
+                <div className="mt-8 pt-8 border-t border-white/5 flex items-start gap-3">
+                    <FaLightbulb className="text-zinc-600 mt-1 shrink-0 text-xs" />
+                    <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-2xl">
+                        {prescription.reason}
+                    </p>
                 </div>
             </div>
         </div>
@@ -283,6 +310,14 @@ const CoachPrescription = ({ data, baselines }) => {
 const RecentActivityRows = ({ runs }) => {
     // State for interactive comparison line
     const [guide, setGuide] = useState(null);
+    const [isDesktop, setIsDesktop] = useState(false);
+
+    useEffect(() => {
+        const check = () => setIsDesktop(window.innerWidth >= 768);
+        check();
+        window.addEventListener('resize', check);
+        return () => window.removeEventListener('resize', check);
+    }, []);
 
     // Top 5 most recent runs
     const recent = useMemo(() => {
@@ -314,16 +349,13 @@ const RecentActivityRows = ({ runs }) => {
     if (recent.length === 0) return null;
 
     // Normalization Maximums
-    const maxDist = Math.max(...recent.map(r => r.distKm)) * 1.1; // Add buffer
-    const maxHR = Math.max(...recent.map(r => r.hr)) * 1.1;
-    const maxPace = Math.max(...recent.map(r => r.paceDecimal)) * 1.1;
+    const maxDist = Math.max(...recent.map(r => r.distKm)) * 1.15; // More buffer for label space
+    const maxHR = Math.max(...recent.map(r => r.hr)) * 1.15;
+    const maxPace = Math.max(...recent.map(r => r.paceDecimal)) * 1.15;
 
     // Identify "Best" values
-    // Best Pace = Lowest value
     const bestPaceVal = Math.min(...recent.map(r => r.paceDecimal));
-    // Best Dist = Highest value
     const bestDistVal = Math.max(...recent.map(r => r.distKm));
-    // Best HR = Lowest value (efficiency)
     const bestHRVal = Math.min(...recent.filter(r => r.hr > 0).map(r => r.hr));
 
     const handleBarClick = (e, type, value, percentage, color, label) => {
@@ -336,35 +368,41 @@ const RecentActivityRows = ({ runs }) => {
     };
 
     return (
-        <div className="bg-black py-[250px] px-6 md:px-12 w-full shadow-2xl relative overflow-hidden group/card"
+        <div className="bg-[#1c1c1e] py-16 md:py-24 px-6 md:px-12 w-full rounded-[32px] border border-white/5 relative overflow-hidden mt-8"
             onClick={() => setGuide(null)}>
-            {/* Subtle Grid Background for Pro feel */}
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 mix-blend-overlay pointer-events-none"></div>
 
             <div className="max-w-7xl mx-auto">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-3 tracking-tight mb-10 relative z-10">
-                    <FaStream className="text-zinc-500 text-lg" />
-                    近期训练流 (Data Stream)
-                    {guide && <span className="text-[10px] font-normal text-zinc-500 ml-2 animate-pulse">• 点击背景取消对比</span>}
-                </h3>
+                <div className="flex items-center justify-between mb-12">
+                    <h3 className="text-3xl font-semibold text-white tracking-tight">
+                        Recent Activity
+                        <span className="block text-sm text-zinc-500 font-normal mt-1 tracking-normal">Visualize your latest runs</span>
+                    </h3>
+                    <div className="text-xs font-medium text-zinc-500 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                        Interactive Data Stream
+                    </div>
+                </div>
 
-                <div className="space-y-10 relative z-10">
+                <div className="space-y-12 relative z-10">
 
                     {/* Global Guide Line Overlay */}
                     {guide && (
                         <div
                             className="absolute top-[-20px] bottom-[-20px] pointer-events-none z-10 flex flex-col items-center"
                             style={{
-                                left: `calc(4rem + 16px + (100% - 4rem - 16px) * ${guide.leftPercentage / 100})`,
+                                // Desktop: 4rem (w-16) + 1.5rem (gap-6) = 5.5rem offset
+                                // Mobile: 0 offset
+                                left: isDesktop
+                                    ? `calc(5.5rem + (100% - 5.5rem) * ${guide.leftPercentage / 100})`
+                                    : `${guide.leftPercentage}%`,
                                 transition: 'left 0.3s ease-out'
                             }}
                         >
                             {/* Line */}
-                            <div className="h-full border-l-2 border-dashed opacity-80 shadow-[0_0_8px_rgba(255,255,255,0.5)]" style={{ borderColor: guide.color }}></div>
+                            <div className="h-full border-l-[1.5px] border-dashed shadow-[0_0_10px_rgba(255,255,255,0.2)]" style={{ borderColor: guide.color }}></div>
 
                             {/* Badge */}
-                            <div className="absolute top-0 -translate-y-1/2 bg-black/80 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg whitespace-nowrap border border-white/10 tabular-nums"
-                                style={{ color: guide.color }}>
+                            <div className="absolute top-0 -translate-y-1/2 bg-[#1c1c1e] text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-xl whitespace-nowrap border border-white/10 tabular-nums z-20"
+                                style={{ color: guide.color, borderColor: guide.color }}>
                                 {guide.valueLabel}
                             </div>
                         </div>
@@ -376,68 +414,62 @@ const RecentActivityRows = ({ runs }) => {
                         const isBestHR = Math.abs(run.hr - bestHRVal) < 0.1;
 
                         return (
-                            <div key={i} className="flex flex-col md:flex-row items-start md:items-center gap-6 group relative">
+                            <div key={i} className="flex flex-col md:flex-row items-center gap-6 group relative">
                                 {/* Date */}
-                                <div className="w-16 text-xs font-bold text-zinc-500 font-mono tracking-wider shrink-0 transition-colors group-hover:text-zinc-300 tabular-nums text-right">
-                                    {run.dateLabel.replace('/', ' – ')}
+                                <div className="w-16 text-xs font-semibold text-zinc-500 shrink-0 tabular-nums text-right group-hover:text-white transition-colors">
+                                    {run.dateLabel}
                                 </div>
 
                                 {/* Visualization Track */}
-                                <div className="flex-1 w-full relative h-[60px] flex items-center">
+                                <div className="flex-1 w-full relative h-[72px] flex items-center">
 
+                                    {/* Stacked Bars */}
+                                    <div className="w-full h-full relative flex flex-col justify-center gap-[10px]">
 
-                                    {/* Stacked/Parallel Metrics */}
-                                    <div className="w-full h-full relative flex flex-col justify-center gap-[8px]">
-
-                                        {/* PACE (Apple Blue #00EDED) */}
-                                        <div
-                                            className={`relative h-[10px] rounded-full transition-all duration-500 cursor-pointer hover:h-[12px] ${isBestPace ? 'shadow-[0_0_15px_rgba(0,237,237,0.9)] ring-1 ring-[#00EDED]/50' : 'shadow-[0_0_10px_rgba(0,237,237,0.3)]'}`}
-                                            style={{
-                                                width: `${(run.paceDecimal / maxPace) * 80}%`,
-                                                backgroundColor: '#00EDED'
-                                            }}
-                                            onClick={(e) => handleBarClick(e, 'pace', run.paceDecimal, (run.paceDecimal / maxPace) * 80, '#00EDED', `PACE ${run.paceLabel} /km`)}
-                                        >
-                                            <div className="absolute -top-5 left-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                                                <span className="text-[10px] font-bold whitespace-nowrap bg-black/50 backdrop-blur px-1 rounded text-[#00EDED] tabular-nums">
-                                                    PACE {run.paceLabel}
-                                                </span>
-                                                {isBestPace && <FaBolt className="text-[12px] text-[#FDB927] animate-pulse drop-shadow-md" />}
-                                            </div>
+                                        {/* PACE (Apple Cyan #32ADE6) */}
+                                        <div className="relative h-[8px] w-full flex items-center">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 cursor-pointer ${isBestPace ? 'opacity-100 shadow-[0_0_12px_rgba(50,173,230,0.6)]' : 'opacity-60 hover:opacity-100'}`}
+                                                style={{
+                                                    width: `${(run.paceDecimal / maxPace) * 85}%`,
+                                                    backgroundColor: '#32ADE6'
+                                                }}
+                                                onClick={(e) => handleBarClick(e, 'pace', run.paceDecimal, (run.paceDecimal / maxPace) * 85, '#32ADE6', `${run.paceLabel}/km`)}
+                                            ></div>
+                                            {/* Label displays on hover or active */}
+                                            <span className="ml-3 text-[10px] font-bold text-[#32ADE6] opacity-0 group-hover:opacity-100 transition-opacity tabular-nums">
+                                                {run.paceLabel}
+                                            </span>
                                         </div>
 
-                                        {/* HR (Apple Red #FA114F) */}
-                                        <div
-                                            className={`relative h-[10px] rounded-full transition-all duration-500 delay-75 cursor-pointer hover:h-[12px] ${isBestHR ? 'shadow-[0_0_15px_rgba(250,17,79,0.9)] ring-1 ring-[#FA114F]/50' : 'shadow-[0_0_10px_rgba(250,17,79,0.3)]'}`}
-                                            style={{
-                                                width: `${(run.hr / maxHR) * 90}%`,
-                                                backgroundColor: '#FA114F'
-                                            }}
-                                            onClick={(e) => handleBarClick(e, 'hr', run.hr, (run.hr / maxHR) * 90, '#FA114F', `HR ${Math.round(run.hr)}`)}
-                                        >
-                                            <div className="absolute -top-5 left-1/3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                                                <span className="text-[10px] font-bold whitespace-nowrap bg-black/50 backdrop-blur px-1 rounded text-[#FA114F] tabular-nums">
-                                                    HR {Math.round(run.hr)}
-                                                </span>
-                                                {isBestHR && <FaHeartbeat className="text-[12px] text-[#FA114F] animate-pulse drop-shadow-md" />}
-                                            </div>
+                                        {/* HR (Apple Red #ff2d55) */}
+                                        <div className="relative h-[8px] w-full flex items-center">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 delay-75 cursor-pointer ${isBestHR ? 'opacity-100 shadow-[0_0_12px_rgba(255,45,85,0.6)]' : 'opacity-60 hover:opacity-100'}`}
+                                                style={{
+                                                    width: `${(run.hr / maxHR) * 90}%`,
+                                                    backgroundColor: '#ff2d55'
+                                                }}
+                                                onClick={(e) => handleBarClick(e, 'hr', run.hr, (run.hr / maxHR) * 90, '#ff2d55', `${Math.round(run.hr)} bpm`)}
+                                            ></div>
+                                            <span className="ml-3 text-[10px] font-bold text-[#ff2d55] opacity-0 group-hover:opacity-100 transition-opacity tabular-nums">
+                                                {Math.round(run.hr)}
+                                            </span>
                                         </div>
 
-                                        {/* DIST (Apple Green #92E12C) */}
-                                        <div
-                                            className={`relative h-[10px] rounded-full transition-all duration-500 delay-150 cursor-pointer hover:h-[12px] ${isBestDist ? 'shadow-[0_0_15px_rgba(146,225,44,0.9)] ring-1 ring-[#92E12C]/50' : 'shadow-[0_0_10px_rgba(146,225,44,0.3)]'}`}
-                                            style={{
-                                                width: `${(run.distKm / maxDist) * 100}%`,
-                                                backgroundColor: '#92E12C'
-                                            }}
-                                            onClick={(e) => handleBarClick(e, 'dist', run.distKm, (run.distKm / maxDist) * 100, '#92E12C', `DIST ${run.distKm.toFixed(2)}`)}
-                                        >
-                                            <div className="absolute -top-5 right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                                                <span className="text-[10px] font-bold whitespace-nowrap bg-black/50 backdrop-blur px-1 rounded text-[#92E12C] tabular-nums">
-                                                    DIST {run.distKm.toFixed(2)}
-                                                </span>
-                                                {isBestDist && <FaTrophy className="text-[12px] text-[#FDB927] animate-bounce drop-shadow-md" />}
-                                            </div>
+                                        {/* DIST (Apple Green #32d74b) */}
+                                        <div className="relative h-[8px] w-full flex items-center">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 delay-150 cursor-pointer ${isBestDist ? 'opacity-100 shadow-[0_0_12px_rgba(50,215,75,0.6)]' : 'opacity-60 hover:opacity-100'}`}
+                                                style={{
+                                                    width: `${(run.distKm / maxDist) * 100}%`,
+                                                    backgroundColor: '#32d74b'
+                                                }}
+                                                onClick={(e) => handleBarClick(e, 'dist', run.distKm, (run.distKm / maxDist) * 100, '#32d74b', `${run.distKm.toFixed(2)} km`)}
+                                            ></div>
+                                            <span className="ml-3 text-[10px] font-bold text-[#32d74b] opacity-0 group-hover:opacity-100 transition-opacity tabular-nums">
+                                                {run.distKm.toFixed(2)}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -445,11 +477,12 @@ const RecentActivityRows = ({ runs }) => {
                         );
                     })}
                 </div>
-                {/* Legend for Best */}
-                <div className="mt-6 flex justify-end gap-3 text-[9px] text-gray-400 font-medium opacity-60">
-                    <span className="flex items-center gap-1"><FaBolt className="text-[#FDB927]" /> Fastest</span>
-                    <span className="flex items-center gap-1"><FaHeartbeat className="text-[#FA114F]" /> Lowest HR</span>
-                    <span className="flex items-center gap-1"><FaTrophy className="text-[#00EDED]" /> Longest</span>
+
+                {/* Legend */}
+                <div className="mt-8 flex justify-end gap-6 text-[10px] text-zinc-500 font-medium tracking-wide">
+                    <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#32ADE6]"></div> Pace</span>
+                    <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#ff2d55]"></div> Heart Rate</span>
+                    <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#32d74b]"></div> Distance</span>
                 </div>
             </div>
         </div>
@@ -499,6 +532,8 @@ const ProfessionalAnalysis = ({ runs }) => {
             return {
                 id: run.id,
                 dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
+                distKm: (distanceMeters / 1000),
+                paceAvg: speedMetersPerMin > 0 ? 1000 / speedMetersPerMin : 0,
                 ef: parseFloat(ef),
                 spm,
                 hr,
@@ -546,156 +581,247 @@ const ProfessionalAnalysis = ({ runs }) => {
                     {/* 1. Aerobic Efficiency Trend */}
                     <ScrollAnimation index={1} className="col-span-1 lg:col-span-2">
                         <AnalysisCard
-                            title="有氧效率 (EF)"
-                            subtitle={`基准线: ${baselines.avgEf} • 目标: 维持在基准之上`}
+                            title="有氧效率"
+                            subtitle="Aerobic Efficiency (EF)"
                             icon={FaHeartbeat}
-                            className="h-full"
+                            className="h-full min-h-[360px] bg-[#1c1c1e] border-white/5"
                             insightType="ef"
                             insightData={data}
                             insightBaseline={efBaseline}
-                            headerColor="text-[#00EDED]"
+                            headerColor="text-white"
                         >
-                            <div className="absolute inset-0 flex items-end justify-between px-4 pb-2">
-                                {/* 1. Pure SVG Line (Ok to Stretch) */}
-                                <svg className="absolute inset-0 w-full h-full overflow-visible p-4" viewBox="0 0 1000 200" preserveAspectRatio="none">
-                                    <defs>
-                                        <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                                            <stop offset="0%" stopColor="#00EDED" />
-                                            <stop offset="100%" stopColor="#00EDED" />
-                                        </linearGradient>
-                                    </defs>
+                            <div className="flex flex-col h-full justify-between pb-2">
+                                {/* 1. Hero Metric Section - Apple Style */}
+                                <div className="mt-4 mb-8 px-1">
+                                    <div className="flex items-baseline gap-3">
+                                        <span className="text-6xl md:text-7xl font-semibold text-white tracking-tight tabular-nums letter-spacing-tighter">
+                                            {data.length > 0 ? data[data.length - 1].ef : '-'}
+                                        </span>
+                                    </div>
 
-                                    {/* Personal Baseline Line */}
-                                    {(() => {
-                                        const y = 200 - ((efBaseline - minEf) / (maxEf - minEf)) * 160 - 20;
-                                        return (
-                                            <line x1="0" y1={y} x2="1000" y2={y} stroke="#00EDED" strokeWidth="2" strokeDasharray="6 4" opacity="0.5" vectorEffect="non-scaling-stroke" />
-                                        );
-                                    })()}
+                                    <div className="flex items-center gap-4 mt-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[13px] font-medium text-white/50">Baseline {baselines.avgEf}</span>
+                                        </div>
+                                        {(() => {
+                                            const currentEf = data.length > 0 ? data[data.length - 1].ef : 0;
+                                            const diff = ((currentEf - efBaseline) / efBaseline) * 100;
+                                            const isPositive = diff > 0;
+                                            const isSignificant = Math.abs(diff) > 1; // Only show color if diff is significant (>1%)
 
-                                    <polyline
-                                        points={data.map((d, i) => {
-                                            const x = (i / (data.length - 1)) * 1000;
-                                            const y = 200 - ((d.ef - minEf) / (maxEf - minEf)) * 160 - 20;
-                                            return `${x},${y}`;
-                                        }).join(" ")}
-                                        fill="none"
-                                        stroke="url(#lineGradient)"
-                                        strokeWidth="4"
-                                        strokeLinecap="round"
-                                        vectorEffect="non-scaling-stroke"
-                                        className="drop-shadow-lg"
-                                    />
-                                </svg>
-
-                                {/* 2. HTML Overlay Points (Never Distort) */}
-                                <div className="absolute inset-0 p-4 pointer-events-none">
-                                    {(() => {
-                                        // Render Baseline Label separately to avoid SVG text stretch too
-                                        const baselineYPercent = 10 + (1 - (efBaseline - minEf) / (maxEf - minEf)) * 80;
-                                        return (
-                                            <div className="absolute left-2 text-[10px] font-bold text-[#00EDED] tabular-nums -translate-y-1/2" style={{ top: `${baselineYPercent}%` }}>
-                                                个人基准 {baselines.avgEf}
-                                            </div>
-                                        )
-                                    })()}
-
-                                    {data.map((d, i) => {
-                                        const normalize = (d.ef - minEf) / (maxEf - minEf);
-                                        const leftPercent = (i / (data.length - 1)) * 100;
-                                        const topPercent = 10 + (1 - normalize) * 80; // Margin 10%, Height 80% (Matches SVG 20/200, 160/200)
-
-                                        const isAboveAvg = d.ef >= efBaseline;
-
-                                        return (
-                                            <div
-                                                key={i}
-                                                className="absolute group pointer-events-auto flex items-center justify-center -translate-x-1/2 -translate-y-1/2 w-8 h-8 cursor-pointer"
-                                                style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
-                                            >
-                                                {/* The Dot */}
-                                                <div className={`w-2.5 h-2.5 rounded-full shadow-sm transition-all duration-300 group-hover:scale-150 ${isAboveAvg ? 'bg-white ring-2 ring-[#00EDED]' : 'bg-gray-400'}`}></div>
-
-                                                {/* Tooltip */}
-                                                <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
-                                                    <span className={`${isAboveAvg ? 'bg-[#00EDED]' : 'bg-gray-500'} text-black text-[10px] font-bold px-2 py-1 rounded-full shadow-lg tabular-nums`}>
-                                                        {d.ef} ({d.dateLabel})
+                                            // Apple style: Subtle pill, color only on text/icon usually, or very soft bg
+                                            return (
+                                                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${isPositive ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                                                    {isPositive ? <FaArrowUp className="text-[10px]" /> : <FaArrowDown className="text-[10px]" />}
+                                                    <span className="text-[11px] font-semibold tabular-nums">
+                                                        {Math.abs(diff).toFixed(1)}%
                                                     </span>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+
+                                {/* 2. Minimalist Area Chart */}
+                                <div className="relative w-full flex-1 min-h-[140px]">
+                                    <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 200" preserveAspectRatio="none">
+                                        <defs>
+                                            <linearGradient id="efGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#00EDED" stopOpacity="0.3" />
+                                                <stop offset="100%" stopColor="#00EDED" stopOpacity="0.0" />
+                                            </linearGradient>
+                                        </defs>
+
+                                        {/* Minimal Baseline - Single clean line */}
+                                        {(() => {
+                                            const y = 200 - ((efBaseline - minEf) / (maxEf - minEf)) * 160 - 20;
+                                            return (
+                                                <line x1="0" y1={y} x2="1000" y2={y} stroke="white" strokeWidth="1" strokeDasharray="4 4" opacity="0.15" vectorEffect="non-scaling-stroke" />
+                                            );
+                                        })()}
+
+                                        {/* Smooth Area Path */}
+                                        <path
+                                            d={`
+                                                M 0,200
+                                                ${data.map((d, i) => {
+                                                const x = (i / (data.length - 1)) * 1000;
+                                                const y = 200 - ((d.ef - minEf) / (maxEf - minEf)) * 160 - 20;
+                                                return `L ${x},${y}`;
+                                            }).join(" ")}
+                                                L 1000,200 Z
+                                            `}
+                                            fill="url(#efGradient)"
+                                        />
+
+                                        {/* Sharp Line Path */}
+                                        <polyline
+                                            points={data.map((d, i) => {
+                                                const x = (i / (data.length - 1)) * 1000;
+                                                const y = 200 - ((d.ef - minEf) / (maxEf - minEf)) * 160 - 20;
+                                                return `${x},${y}`;
+                                            }).join(" ")}
+                                            fill="none"
+                                            stroke="#00EDED"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            vectorEffect="non-scaling-stroke"
+                                        />
+
+                                        {/* Interactive Points (Only visible on hover ideally, but kept subtle here) */}
+                                        {data.map((d, i) => {
+                                            const x = (i / (data.length - 1)) * 1000;
+                                            const y = 200 - ((d.ef - minEf) / (maxEf - minEf)) * 160 - 20;
+                                            return (
+                                                <circle key={i} cx={x} cy={y} r={3} fill="#1c1c1e" stroke="#00EDED" strokeWidth="2" className="opacity-0 hover:opacity-100 transition-opacity duration-200" />
+                                            );
+                                        })}
+                                    </svg>
+
+                                    {/* X-Axis Labels (First and Last only) */}
+                                    <div className="absolute top-full left-0 right-0 mt-2 flex justify-between text-[10px] font-medium text-white/30 uppercase tracking-widest">
+                                        <span>{data[0]?.dateLabel}</span>
+                                        <span>{data[data.length - 1]?.dateLabel}</span>
+                                    </div>
                                 </div>
                             </div>
-
                         </AnalysisCard>
                     </ScrollAnimation>
 
-                    {/* 2. Cadence */}
+                    {/* 2. Cadence - Apple Style */}
                     <ScrollAnimation index={1}>
                         <AnalysisCard
-                            title="步频 (SPM)"
-                            subtitle={`个人基准: ${baselines.avgSpm} • 下阶段目标: ${spmGoal}`}
+                            title="步频"
+                            subtitle="Avg Cadence (SPM)"
                             icon={FaRunning}
-                            className="h-full"
+                            className="h-full min-h-[360px] bg-[#1c1c1e] border-white/5"
                             insightType="spm"
                             insightData={data}
                             insightBaseline={baselines.avgSpm}
-                            headerColor="text-[#92E12C]"
+                            headerColor="text-white"
                         >
-                            <div className="flex items-end justify-between h-full gap-2 px-2">
-                                {data.map((d, i) => {
-                                    const height = (d.spm / 200) * 100;
-                                    let colorClass = "bg-[#FDB927]";
-                                    if (d.spm >= spmGoal) colorClass = "bg-[#92E12C]"; // Green
-                                    else if (d.spm >= baselines.avgSpm) colorClass = "bg-[#92E12C]/70"; // Green Fade
-
-                                    return (
-                                        <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end">
-                                            <Tooltip label="步频" value={`${d.spm}`} color={d.spm >= spmGoal ? "bg-[#92E12C]" : "bg-[#FDB927]"} />
-                                            <div
-                                                className={`w-full max-w-[16px] rounded-t-lg transition-all duration-500 ${colorClass} opacity-80 group-hover:opacity-100`}
-                                                style={{ height: `${height}%` }}
-                                            ></div>
-                                            <span className="text-[9px] text-gray-400 mt-2 font-medium tabular-nums">{d.dateLabel}</span>
+                            <div className="flex flex-col h-full justify-between pb-2">
+                                {/* Hero Metric */}
+                                <div className="mt-4 mb-8 px-1">
+                                    <div className="flex items-baseline gap-3">
+                                        <span className="text-6xl md:text-7xl font-semibold text-white tracking-tight tabular-nums letter-spacing-tighter">
+                                            {data.length > 0 ? data[data.length - 1].spm : '-'}
+                                        </span>
+                                        <span className="text-xl text-zinc-500 font-medium tracking-normal">spm</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-3">
+                                        <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-800/50 border border-white/5">
+                                            <span className="text-[11px] font-medium text-zinc-400">Goal {spmGoal}</span>
                                         </div>
-                                    )
-                                })}
-                            </div>
-                            <div className="absolute top-[16%] left-0 right-0 border-t border-dashed border-[#92E12C]/30 pointer-events-none flex items-center">
-                                <span className="text-[9px] text-[#92E12C] font-bold bg-[#92E12C]/10 px-1 rounded ml-2 tabular-nums">目标 {spmGoal}</span>
+                                    </div>
+                                </div>
+
+                                {/* Minimalist Bar Chart */}
+                                <div className="flex items-end justify-between h-full gap-1.5 w-full min-h-[140px] px-1">
+                                    {data.map((d, i) => {
+                                        // Scale 150-200 range mostly to emphasize differences
+                                        const minDisplay = 150;
+                                        const maxDisplay = 200;
+                                        const normalized = Math.max(0, Math.min(1, (d.spm - minDisplay) / (maxDisplay - minDisplay)));
+                                        const height = 10 + (normalized * 90); // Min 10% height
+
+                                        // Apple Fitness Green for good, Yellow/Orange for low
+                                        // Apple Green: #32d74b, Yellow: #ffd60a
+                                        const isGood = d.spm >= 170;
+                                        const barColor = isGood ? '#32d74b' : '#ffd60a';
+
+                                        return (
+                                            <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end group">
+                                                <Tooltip label="SPM" value={`${d.spm}`} color={isGood ? "bg-[#32d74b]" : "bg-[#ffd60a]"} />
+
+                                                <div
+                                                    className="w-full max-w-[12px] rounded-t-[2px] opacity-80 group-hover:opacity-100 transition-all duration-300"
+                                                    style={{
+                                                        height: `${height}%`,
+                                                        backgroundColor: barColor
+                                                    }}
+                                                ></div>
+
+                                                {/* X-Axis Date (Every 3rd or specific logic to not crowd) */}
+                                                <span className={`text-[9px] text-zinc-600 mt-2 font-medium tabular-nums ${i % 3 === 0 || i === data.length - 1 ? 'opacity-100' : 'opacity-0'} group-hover:opacity-100 transition-opacity`}>
+                                                    {d.dateLabel.split('/')[1]}
+                                                </span>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
                             </div>
                         </AnalysisCard>
                     </ScrollAnimation>
 
-                    {/* 3. Training Load */}
+                    {/* 3. Training Load - Apple Style */}
                     <ScrollAnimation index={2}>
                         <AnalysisCard
-                            title="相对负荷 (Load)"
-                            subtitle="强度 x 时间 • 个人疲劳监控"
+                            title="相对负荷"
+                            subtitle="Training Load"
                             icon={FaBolt}
-                            className="h-full"
+                            className="h-full min-h-[360px] bg-[#1c1c1e] border-white/5 hover:scale-[1.01]"
                             insightType="load"
                             insightData={data}
                             insightBaseline={null}
-                            headerColor="text-[#FA114F]"
+                            headerColor="text-white"
                         >
-                            <div className="flex items-end justify-between h-full gap-3 px-2">
-                                {data.map((d, i) => {
-                                    const height = (d.rawLoad / maxLoad) * 100;
-                                    return (
-                                        <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end">
-                                            <Tooltip label="负荷" value={Math.round(d.rawLoad)} color="bg-[#FA114F]" />
-                                            <div
-                                                className="w-full max-w-[20px] rounded-md bg-[#FA114F]/20 group-hover:bg-[#FA114F] transition-colors duration-300 relative overflow-hidden"
-                                                style={{ height: `${height}%` }}
-                                            >
-                                                <div className="absolute bottom-0 left-0 right-0 bg-[#FA114F] h-1"></div>
+                            <div className="flex flex-col h-full justify-between pb-2">
+                                {/* Hero Metric */}
+                                <div className="mt-4 mb-8 px-1">
+                                    <div className="flex items-baseline gap-3">
+                                        <span className="text-6xl md:text-7xl font-semibold text-white tracking-tight tabular-nums letter-spacing-tighter">
+                                            {data.length > 0 ? Math.round(data[data.length - 1].rawLoad) : '-'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-3">
+                                        {(() => {
+                                            const lastLoad = data.length > 0 ? data[data.length - 1].rawLoad : 0;
+                                            const avgLoad = data.reduce((a, b) => a + b.rawLoad, 0) / (data.length || 1);
+                                            const ratio = lastLoad / avgLoad;
+                                            let label = "Optimal";
+                                            let colorClass = "text-zinc-400";
+
+                                            if (ratio > 1.5) { label = "High Load"; colorClass = "text-[#ff2d55]"; } // Apple Red
+                                            else if (ratio < 0.6) { label = "Recovery"; colorClass = "text-[#32d74b]"; } // Apple Green
+
+                                            return (
+                                                <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-800/50 border border-white/5">
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${ratio > 1.5 ? 'bg-[#ff2d55]' : ratio < 0.6 ? 'bg-[#32d74b]' : 'bg-gray-400'}`}></div>
+                                                    <span className={`text-[11px] font-medium ${colorClass}`}>{label}</span>
+                                                </div>
+                                            )
+                                        })()}
+                                    </div>
+                                </div>
+
+                                {/* Minimalist Bar Chart */}
+                                <div className="flex items-end justify-between h-full gap-1.5 w-full min-h-[140px] px-1">
+                                    {data.map((d, i) => {
+                                        const height = (d.rawLoad / maxLoad) * 100;
+                                        // Apple Activity Red: #ff2d55
+                                        // Use opacity for visual hierarchy of load
+                                        const opacity = 0.5 + ((d.rawLoad / maxLoad) * 0.5);
+
+                                        return (
+                                            <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                                                <Tooltip label="Load" value={Math.round(d.rawLoad)} color="bg-[#ff2d55]" />
+                                                <div
+                                                    className="w-full max-w-[12px] rounded-t-[2px] bg-[#ff2d55] group-hover:brightness-110 transition-all duration-300"
+                                                    style={{
+                                                        height: `${height}%`,
+                                                        opacity: opacity
+                                                    }}
+                                                ></div>
+                                                {/* X-Axis Date */}
+                                                <span className={`text-[9px] text-zinc-600 mt-2 font-medium tabular-nums ${i % 3 === 0 || i === data.length - 1 ? 'opacity-100' : 'opacity-0'} group-hover:opacity-100 transition-opacity`}>
+                                                    {d.dateLabel.split('/')[1]}
+                                                </span>
                                             </div>
-                                            <span className="text-[9px] text-gray-400 mt-2 font-medium tabular-nums">{d.dateLabel}</span>
-                                        </div>
-                                    )
-                                })}
+                                        )
+                                    })}
+                                </div>
                             </div>
                         </AnalysisCard>
                     </ScrollAnimation>

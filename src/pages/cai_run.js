@@ -269,7 +269,7 @@ function CaiRun() {
     };
 
     return (
-        <div className="relative bg-black text-white h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar font-sans selection:bg-gray-800 selection:text-white">
+        <div className="relative bg-black text-white min-h-screen md:h-screen md:overflow-y-scroll md:snap-y md:snap-mandatory scroll-smooth no-scrollbar font-sans selection:bg-gray-800 selection:text-white overflow-x-hidden">
             <Navbar />
             <StickyHeader yearTotal={totalDistance2026} runCount={totalRuns2026} />
 
@@ -716,7 +716,7 @@ function CaiRun() {
                         {/* Weekday Labels */}
                         <div className="grid grid-cols-7 mb-4">
                             {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day) => (
-                                <div key={day} className="text-center text-[10px] font-semibold text-gray-400 tracking-wider">
+                                <div key={day} className="text-center text-[10px] md:text-xs font-bold text-gray-200 tracking-wider">
                                     {day}
                                 </div>
                             ))}

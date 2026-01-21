@@ -20,35 +20,81 @@ const XiaohongshuIcon = ({ size = 20, ...props }) => (
 const PhotoModal = ({ photo, onClose }) => {
     // State for WeChat QR Code Modal
     const [showWeChat, setShowWeChat] = React.useState(false);
+    // State for carousel index
+    const [currentIndex, setCurrentIndex] = React.useState(0);
 
     // Calculate modal size for Desktop to perfectly fit image
     const [modalStyle, setModalStyle] = React.useState({});
 
-    // Lock body scroll when modal is open
-    useEffect(() => {
-        if (photo) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'auto';
+    // Normalize items: use gallery if exists, otherwise fallback to root photo items
+    const items = React.useMemo(() => {
+        if (!photo) return [];
+        if (photo.gallery && photo.gallery.length > 0) {
+            return photo.gallery.map(item => ({
+                ...item,
+                // Ensure helper flags exist if not explicitly set in gallery item
+                isLivePhoto: item.mediaType === 'live' || (item.mediaType === 'video' && item.isLivePhoto),
+                isVideo: item.mediaType === 'video' || item.mediaType === 'live' || !!item.video,
+            }));
         }
-        return () => {
-            document.body.style.overflow = 'auto';
-        };
+        // Fallback to legacy single-item structure
+        return [{
+            title: photo.title,
+            caption: photo.caption,
+            image: photo.image,
+            video: photo.video,
+            isLivePhoto: photo.isLivePhoto,
+            isVideo: !!photo.video
+        }];
     }, [photo]);
 
-    // Close on escape key
+    // Current item to display
+    const currentItem = items[currentIndex] || items[0];
+    const hasMultiple = items.length > 1;
+
+    // Reset index when modal opens with a new photo object
     useEffect(() => {
-        const handleEsc = (e) => {
+        setCurrentIndex(0);
+    }, [photo?._id]); // Use ID dependency if available, otherwise photo object
+
+    // Navigation handlers
+    const nextSlide = React.useCallback(() => {
+        if (items.length > 1) {
+            setCurrentIndex((prev) => (prev + 1) % items.length);
+        }
+    }, [items.length]);
+
+    const prevSlide = React.useCallback(() => {
+        if (items.length > 1) {
+            setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
+        }
+    }, [items.length]);
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
                 if (showWeChat) setShowWeChat(false);
                 else onClose();
+            } else if (e.key === 'ArrowRight') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
             }
         };
-        window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
-    }, [onClose, showWeChat]);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onClose, showWeChat, nextSlide, prevSlide]);
 
-    const dimensions = photo?.image?.asset?.metadata?.dimensions;
+    // Lock body scroll
+    useEffect(() => {
+        if (photo) document.body.style.overflow = 'hidden';
+        else document.body.style.overflow = 'auto';
+        return () => { document.body.style.overflow = 'auto'; };
+    }, [photo]);
+
+    // Calculate dynamic size
+    const dimensions = currentItem?.image?.asset?.metadata?.dimensions;
     const aspectRatio = dimensions ? dimensions.aspectRatio : 1;
 
     React.useEffect(() => {
@@ -58,8 +104,8 @@ const PhotoModal = ({ photo, onClose }) => {
                 return;
             }
 
-            const sidebarWidth = 400; // Fixed sidebar width
-            const padding = 80; // Safety margin
+            const sidebarWidth = 400;
+            const padding = 80;
             const maxHeight = window.innerHeight * 0.85;
             const maxWidth = window.innerWidth - padding;
             const maxImageWidth = maxWidth - sidebarWidth;
@@ -86,9 +132,9 @@ const PhotoModal = ({ photo, onClose }) => {
         }
 
         return () => window.removeEventListener('resize', calculateSize);
-    }, [photo, aspectRatio]);
+    }, [photo, aspectRatio, currentIndex]); // Recalculate when index changes (different aspect ratios)
 
-    if (!photo) return null;
+    if (!photo || !currentItem) return null;
 
     // Get current URL for sharing
     const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -102,12 +148,11 @@ const PhotoModal = ({ photo, onClose }) => {
                     onClick={onClose}
                 />
 
-                {/* Modal Content - Dynamic Size Node */}
+                {/* Modal Content */}
                 <div
                     className="relative bg-black md:bg-white md:dark:bg-black rounded-xl overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in fade-in zoom-in-95 duration-300 group max-h-[90vh] w-full md:w-auto"
                     style={modalStyle}
                 >
-
                     {/* Close Button Mobile */}
                     <button
                         onClick={onClose}
@@ -116,66 +161,81 @@ const PhotoModal = ({ photo, onClose }) => {
                         <IoClose size={24} />
                     </button>
 
-                    {/* Left: Image Container (Flexible width based on parent query, rigid height on desktop) */}
-                    <div className="relative bg-black flex items-center justify-center h-[50vh] md:h-full md:flex-1 md:min-w-0 group/video">
-                        {photo.video?.asset?.url ? (
-                            /* Check if using legacy Live Photo mode (default) or explicit Video mode */
-                            (photo.isLivePhoto !== false) ? (
-                                /* LIVE PHOTO MODE: Immersive, Loops, No Controls, Click-to-Play */
+                    {/* Left: Media Container */}
+                    <div className="relative bg-black flex items-center justify-center h-[50vh] md:h-full md:flex-1 md:min-w-0 group/video select-none">
+
+                        {/* Navigation Buttons (Desktop Hover / Mobile Always visible if needed) */}
+                        {hasMultiple && (
+                            <>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); prevSlide(); }}
+                                    className="absolute left-4 z-40 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 hidden md:block"
+                                >
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); nextSlide(); }}
+                                    className="absolute right-4 z-40 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 hidden md:block"
+                                >
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                                </button>
+
+                                {/* Dots indicator */}
+                                <div className="absolute bottom-4 left-0 right-0 z-40 flex justify-center gap-2 pointer-events-none">
+                                    {items.map((_, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentIndex ? 'bg-white scale-125' : 'bg-white/30'}`}
+                                        />
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        {currentItem.video?.asset?.url ? (
+                            /* Video / Live Photo Logic */
+                            (currentItem.isLivePhoto !== false) ? (
+                                /* LIVE PHOTO MODE */
                                 <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => {
                                     e.stopPropagation();
                                     const video = e.currentTarget.querySelector('video');
-                                    if (video) {
-                                        if (video.paused) {
-                                            video.play();
-                                        } else {
-                                            video.pause();
-                                        }
-                                    }
+                                    if (video) video.paused ? video.play() : video.pause();
                                 }}>
                                     <video
-                                        src={photo.video.asset.url}
-                                        poster={photo.image ? urlFor(photo.image).auto('format').width(1200).url() : undefined}
+                                        key={currentItem.video.asset.url} // Force re-render on change
+                                        src={currentItem.video.asset.url}
+                                        poster={currentItem.image ? urlFor(currentItem.image).auto('format').width(1200).url() : undefined}
                                         autoPlay
                                         loop
-                                        muted={true} // Start muted for autoplay policy
+                                        muted={true}
                                         playsInline
                                         className="w-full h-full object-contain cursor-pointer"
-                                        ref={(el) => {
-                                            // Auto-play workaround if React's autoPlay is flaky with hydration
-                                            if (el && el.paused && el.muted) {
-                                                el.play().catch(() => { });
-                                            }
-                                        }}
+                                        ref={(el) => { if (el && el.paused && el.muted) el.play().catch(() => { }); }}
                                     />
-
-                                    {/* Mute Toggle Button */}
+                                    {/* Mute Toggle */}
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             const video = e.currentTarget.parentElement.querySelector('video');
                                             if (video) {
                                                 video.muted = !video.muted;
-                                                const icon = e.currentTarget.querySelector('svg');
-                                                if (video.muted) {
-                                                    e.currentTarget.classList.add('opacity-50');
-                                                } else {
-                                                    e.currentTarget.classList.remove('opacity-50');
-                                                }
+                                                // Force re-render of icon opacity via direct DOM class manipulation for simplicity
+                                                e.currentTarget.classList.toggle('opacity-50', video.muted);
                                             }
                                         }}
-                                        className="absolute bottom-4 right-4 z-20 p-2 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all opacity-0 group-hover/video:opacity-100"
+                                        className="absolute bottom-4 right-12 md:right-4 z-40 p-2 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all opacity-0 group-hover/video:opacity-100"
                                     >
                                         <span className="text-xs font-medium px-1">Sound</span>
                                     </button>
                                 </div>
                             ) : (
-                                /* REGULAR VIDEO MODE: Native Controls, No Loop */
+                                /* REGULAR VIDEO MODE */
                                 <div className="relative w-full h-full flex items-center justify-center bg-black" onClick={(e) => e.stopPropagation()}>
                                     <video
-                                        src={photo.video.asset.url}
-                                        poster={photo.image ? urlFor(photo.image).auto('format').width(1200).url() : undefined}
-                                        controls // Enable native controls (progress bar, volume, fullscreen)
+                                        key={currentItem.video.asset.url}
+                                        src={currentItem.video.asset.url}
+                                        poster={currentItem.image ? urlFor(currentItem.image).auto('format').width(1200).url() : undefined}
+                                        controls
                                         autoPlay
                                         playsInline
                                         className="w-full h-full object-contain"
@@ -184,10 +244,10 @@ const PhotoModal = ({ photo, onClose }) => {
                                 </div>
                             )
                         ) : (
-                            photo.image && (
+                            currentItem.image && (
                                 <Image
-                                    src={urlFor(photo.image).auto('format').width(1200).url()}
-                                    alt={photo.title || 'Detail view'}
+                                    src={urlFor(currentItem.image).auto('format').width(1200).url()}
+                                    alt={currentItem.title || 'Detail view'}
                                     className="object-cover w-full h-full"
                                     fill
                                     priority
@@ -197,43 +257,44 @@ const PhotoModal = ({ photo, onClose }) => {
                             )
                         )}
                     </div>
+
                     {/* Right: Info Container */}
                     <div className="w-full md:w-[400px] flex-shrink-0 bg-white dark:bg-zinc-900 border-l border-gray-100 dark:border-zinc-800 flex flex-col h-auto md:h-full">
-
                         {/* Header */}
                         <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 overflow-hidden">
-                                    {/* Can put user avatar here if available, using placeholder letter for now */}
                                     <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400">C</div>
                                 </div>
                                 <span className="font-bold text-sm text-gray-900 dark:text-white">caicaicai</span>
                             </div>
-                            {/* Desktop Close Button */}
-                            <button
-                                onClick={onClose}
-                                className="hidden md:block text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                            >
+                            <button onClick={onClose} className="hidden md:block text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                                 <IoClose size={24} />
                             </button>
                         </div>
 
                         {/* Scrollable Content */}
                         <div className="flex-1 p-6 overflow-y-auto">
-                            {photo.title && (
+                            {/* Pagination Counter */}
+                            {hasMultiple && (
+                                <div className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">
+                                    {currentIndex + 1} / {items.length}
+                                </div>
+                            )}
+
+                            {(currentItem.title || photo.title) && (
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                                    {photo.title}
+                                    {currentItem.title || photo.title}
                                 </h2>
                             )}
 
-                            {photo.caption && (
+                            {(photo.caption) && (
                                 <div className="prose dark:prose-invert text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
                                     {photo.caption}
                                 </div>
                             )}
 
                             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-zinc-800 text-xs text-gray-400">
-                                {/* Date formatting could go here */}
                                 <p>{new Date(photo._createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                             </div>
                         </div>
@@ -242,62 +303,31 @@ const PhotoModal = ({ photo, onClose }) => {
                         <div className="p-4 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between">
                             <span className="text-xs font-medium text-gray-400">Share to</span>
                             <div className="flex items-center gap-4">
-                                <button className="text-gray-400 hover:text-[#E1306C] transition-colors" title="Share to Instagram">
-                                    <FaInstagram size={20} />
-                                </button>
-                                <button
-                                    className="text-gray-400 hover:text-[#07C160] transition-colors relative"
-                                    title="Share to WeChat"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setShowWeChat(true);
-                                    }}
-                                >
-                                    <WeChatIcon size={20} />
-                                </button>
-                                <button className="text-gray-400 hover:text-[#FF2442] transition-colors" title="Share to Xiaohongshu">
-                                    <XiaohongshuIcon size={20} />
-                                </button>
+                                <button className="text-gray-400 hover:text-[#E1306C] transition-colors"><FaInstagram size={20} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); setShowWeChat(true); }} className="text-gray-400 hover:text-[#07C160] transition-colors"><WeChatIcon size={20} /></button>
+                                <button className="text-gray-400 hover:text-[#FF2442] transition-colors"><XiaohongshuIcon size={20} /></button>
                             </div>
                         </div>
-
-
                     </div>
                 </div>
 
-                {/* Close button outside (optional alternative) */}
-                <button
-                    onClick={onClose}
-                    className="hidden md:block absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
-                >
+                {/* Close button outside */}
+                <button onClick={onClose} className="hidden md:block absolute top-6 right-6 text-white/70 hover:text-white transition-colors">
                     <IoClose size={32} />
                 </button>
             </div>
 
-            {/* WeChat QR Code Modal Overlay */}
+            {/* WeChat QR Code Modal */}
             {showWeChat && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    {/* Transparent Backdrop to close */}
-                    <div
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        onClick={() => setShowWeChat(false)}
-                    />
-                    {/* QR Code Card */}
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowWeChat(false)} />
                     <div className="relative bg-white dark:bg-zinc-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
-                        <button
-                            onClick={() => setShowWeChat(false)}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                        >
+                        <button onClick={() => setShowWeChat(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:hover:text-white">
                             <IoClose size={24} />
                         </button>
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Share to WeChat</h3>
                         <div className="p-2 bg-white rounded-lg">
-                            {/* QR Code using API to avoid dependencies */}
-                            <img
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`}
-                                alt="WeChat QR Code"
-                                className="w-48 h-48"
-                            />
+                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`} alt="WeChat QR Code" className="w-48 h-48" />
                         </div>
                         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">Scan with WeChat to share</p>
                     </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import Navbar from './components/Navbar';
 import Housea from './components/home_hotel_a/Housea';
-import useScrollRestoration from '../hooks/useScrollRestoration';
+
 
 
 
@@ -10,7 +10,7 @@ import useScrollRestoration from '../hooks/useScrollRestoration';
 
 // Photos Page Component / 照片页面组件 (Actually rendering About content now)
 function CaiPhotos() {
-  useScrollRestoration();
+
   return (
     <div>
       <Navbar />

@@ -14,10 +14,10 @@ import Mylifec from './components/About_me/Mylifec';
 
 
 import { client } from '../sanity/lib/client';
-import useScrollRestoration from '../hooks/useScrollRestoration';
+
 
 function Index({ headline }) {
-  useScrollRestoration();
+
   return (
     <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500">
       <Navbar />

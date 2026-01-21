@@ -45,6 +45,78 @@ export const photo = {
                 input: VideoInput
             },
         },
+
+        {
+            name: 'gallery',
+            title: 'Gallery (Max 9 items)',
+            type: 'array',
+            description: 'Upload up to 9 mixed media items (Images, Videos, or Live Photos) to display in the project detail view.',
+            validation: Rule => Rule.max(9),
+            of: [
+                {
+                    type: 'object',
+                    title: 'Media Item',
+                    fields: [
+                        {
+                            name: 'title',
+                            title: 'Title',
+                            type: 'string',
+                        },
+                        {
+                            name: 'mediaType',
+                            title: 'Media Type',
+                            type: 'string',
+                            options: {
+                                list: [
+                                    { title: 'Image', value: 'image' },
+                                    { title: 'Video', value: 'video' },
+                                    { title: 'Live Photo', value: 'live' },
+                                ],
+                                layout: 'radio',
+                                direction: 'horizontal'
+                            },
+                            initialValue: 'image'
+                        },
+                        {
+                            name: 'image',
+                            title: 'Image',
+                            type: 'image',
+                            options: { hotspot: true },
+                            hidden: ({ parent }) => parent?.mediaType === 'video'
+                        },
+                        {
+                            name: 'video',
+                            title: 'Video File',
+                            type: 'file',
+                            options: { accept: 'video/*' },
+                            hidden: ({ parent }) => parent?.mediaType === 'image'
+                        },
+                        {
+                            name: 'isLivePhoto',
+                            title: 'Is Live Photo?',
+                            type: 'boolean',
+                            initialValue: true,
+                            hidden: ({ parent }) => parent?.mediaType !== 'live'
+                        }
+                    ],
+                    preview: {
+                        select: {
+                            title: 'title',
+                            mediaType: 'mediaType',
+                            image: 'image',
+                        },
+                        prepare(selection) {
+                            const { title, mediaType, image } = selection;
+                            return {
+                                title: title || (mediaType ? mediaType.toUpperCase() : 'Untitled'),
+                                subtitle: mediaType,
+                                media: image
+                            };
+                        }
+                    }
+                }
+            ]
+        },
         {
             name: 'tags',
             title: 'Tags (Highlights)',

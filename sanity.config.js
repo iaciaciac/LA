@@ -1,7 +1,7 @@
 import { defineConfig } from 'sanity'
 import { deskTool } from 'sanity/desk'
 import { visionTool } from '@sanity/vision'
-import { siteSettings, photo, healthMetrics } from './sanity/schemas/index'
+import { siteSettings, photo, healthMetrics, aboutPage } from './sanity/schemas/index'
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET
@@ -13,7 +13,7 @@ export default defineConfig({
     dataset,
     // Add and edit the content schema in the './sanity/schema' folder
     schema: {
-        types: [siteSettings, photo, healthMetrics],
+        types: [siteSettings, photo, healthMetrics, aboutPage],
     },
     plugins: [
         deskTool(),

@@ -25,7 +25,7 @@ const Navbar = () => {
 
   return (
     <header className={`${router.pathname === '/' ? 'relative' : router.pathname === '/cai_run' ? 'absolute top-0' : 'sticky top-0'} left-0 right-0 z-50 w-full mb-[10px] h-[44px] backdrop-blur-[20px] backdrop-saturate-[180%] bg-[rgba(var(--background-start-rgb),0.72)] transition-all duration-300`}>
-      <nav className="flex items-center justify-between w-full h-full px-6 md:px-12" role="navigation">
+      <nav className="flex items-center justify-between w-full h-full px-4 md:px-12" role="navigation">
         <div className="flex-shrink-0">
           <Link href="/">
             <span
@@ -37,15 +37,15 @@ const Navbar = () => {
           </Link>
         </div>
 
-        <div className="flex gap-8 text-xs font-medium" style={{ color: 'rgb(var(--foreground-rgb))' }}>
-          <Link href="/">
+        <div className="flex gap-4 md:gap-8 text-xs font-medium overflow-x-auto no-scrollbar items-center" style={{ color: 'rgb(var(--foreground-rgb))' }}>
+          <Link href="/" className="shrink-0 hidden md:block">
             <span className="relative opacity-80 hover:opacity-100 transition-opacity">Home</span>
           </Link>
-          <Link href="/cai_photos">
+          <Link href="/cai_photos" className="shrink-0">
             <span className="relative opacity-80 hover:opacity-100 transition-opacity">Photos</span>
           </Link>
-          <Link href="/cai_run">
-            <div className="flex items-center gap-1 group cursor-pointer">
+          <Link href="/cai_run" className="shrink-0">
+            <div className="flex items-center gap-1.5 group cursor-pointer">
               <span className="relative opacity-100 group-hover:opacity-100 transition-opacity">Run</span>
               {distance && (
                 <span className="text-[9px] font-bold" style={{ color: '#AAFB00' }}>
@@ -54,10 +54,10 @@ const Navbar = () => {
               )}
             </div>
           </Link>
-          <Link href="/cai_damn">
+          <Link href="/cai_damn" className="shrink-0">
             <span className="relative opacity-80 hover:opacity-100 transition-opacity">DAMN</span>
           </Link>
-          <Link href="/cai_about">
+          <Link href="/cai_about" className="shrink-0">
             <span className="relative opacity-80 hover:opacity-100 transition-opacity">About</span>
           </Link>
         </div>

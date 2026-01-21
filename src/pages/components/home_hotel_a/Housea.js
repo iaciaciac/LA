@@ -1,12 +1,13 @@
 import React from 'react';
 
-const Housea = () => {
+const Housea = ({ coverImage }) => {
+  const imageSrc = coverImage || "/images/xiamen_cai_.jpg";
   return (
     <div className="relative flex flex-col flex-grow h-full bg-background-900 border-solid border-background-200 rounded-xl px-6 lg:px-6 py-8 pt-12" style={{ opacity: 1 }}>
       <div className="relative">
         <img
           alt="twitter"
-          src="/images/xiamen_cai_.jpg"
+          src={imageSrc}
           width={1000}
           height={500}
           className="w-full h-full rounded-xl object-cover"
