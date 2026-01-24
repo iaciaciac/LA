@@ -168,7 +168,21 @@ function CaiRun() {
                 );
 
                 if (combinedRuns.length > 0) {
-                    setLatestRun(combinedRuns[0]);
+                    // Default to latest run initially
+                    let runToDisplay = combinedRuns[0];
+
+                    // Logic: Find the run with the highest distance on the latest day
+                    if (runToDisplay) {
+                        const latestDate = new Date(runToDisplay.start_date).toDateString();
+                        const runsOnLatestDay = combinedRuns.filter(r => new Date(r.start_date).toDateString() === latestDate);
+                        if (runsOnLatestDay.length > 1) {
+                            // Sort by distance desc
+                            runsOnLatestDay.sort((a, b) => b.distance - a.distance);
+                            runToDisplay = runsOnLatestDay[0];
+                        }
+                    }
+
+                    setLatestRun(runToDisplay);
                     setRuns(combinedRuns);
                     setCalendarDate(new Date(combinedRuns[0].start_date));
                     // Check query params for selected run ID after data load
@@ -217,6 +231,9 @@ function CaiRun() {
     const paceSec = Math.floor(paceSeconds % 60);
     const pace = `${paceMin}'${paceSec < 10 ? '0' : ''}${paceSec}"`;
     const durationMin = latestRun ? Math.floor(latestRun.moving_time / 60) : 0;
+    const cadence = latestRun && latestRun.steps && latestRun.moving_time > 0
+        ? Math.round(latestRun.steps / (latestRun.moving_time / 60))
+        : '--';
 
     // Filter runs for the latest week
     const recentRuns = runs.length > 0 ? (() => {
@@ -285,7 +302,7 @@ function CaiRun() {
 
             {/* Progress Ring Section */}
             <section className="relative py-24 md:py-32 bg-white dark:bg-black min-h-screen snap-start flex flex-col justify-center">
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-[1520px] mx-auto px-6">
 
 
                     {/* Progress Ring */}
@@ -329,7 +346,7 @@ function CaiRun() {
                                 </svg>
 
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <div className="text-[14vw] md:text-9xl lg:text-[13rem] font-black text-gray-900 dark:text-white mb-4 leading-none tracking-tighter transition-all duration-500">
+                                    <div className="text-[12vw] md:text-8xl lg:text-[10rem] font-black text-gray-900 dark:text-white mb-4 leading-none tracking-tighter transition-all duration-500">
                                         {animateRing ? (
                                             <AnimatedNumber value={parseFloat(distanceKm)} />
                                         ) : (
@@ -360,6 +377,20 @@ function CaiRun() {
                     {latestRun ? (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
                             <div className="text-center">
+                                <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Cadence</div>
+                                <div className="text-4xl font-bold text-gray-900 dark:text-white">
+                                    {cadence}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">spm</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Heart Rate</div>
+                                <div className="text-4xl font-bold text-gray-900 dark:text-white">
+                                    {latestRun.average_heartrate ? Math.round(latestRun.average_heartrate) : '--'}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">avg bpm</div>
+                            </div>
+                            <div className="text-center">
                                 <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Pace</div>
                                 <div className="text-4xl font-bold text-gray-900 dark:text-white">{pace}</div>
                                 <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">/km</div>
@@ -368,16 +399,6 @@ function CaiRun() {
                                 <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Time</div>
                                 <div className="text-4xl font-bold text-gray-900 dark:text-white">{durationMin}</div>
                                 <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">minutes</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Heart Rate</div>
-                                <div className="text-4xl font-bold text-gray-900 dark:text-white">142</div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">avg bpm</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Calories</div>
-                                <div className="text-4xl font-bold text-gray-900 dark:text-white">{Math.round(distanceKm * 65)}</div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">kcal</div>
                             </div>
                         </div>
                     ) : (
@@ -416,7 +437,7 @@ function CaiRun() {
                     if (loading && runs.length === 0) {
                         return (
                             <section className="px-6 py-32 bg-[#F5F5F7] dark:bg-black">
-                                <div className="max-w-7xl mx-auto">
+                                <div className="max-w-[1520px] mx-auto">
                                     <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-12 px-2">Recent Runs</h3>
                                     <div className="flex gap-6 overflow-hidden">
                                         {[...Array(3)].map((_, i) => (
@@ -466,7 +487,7 @@ function CaiRun() {
 
                         return (
                             <section key={year} id={`year-${year}`} className="px-6 py-16 bg-[#F5F5F7] dark:bg-black min-h-screen snap-start flex flex-col justify-center">
-                                <div className="max-w-7xl mx-auto w-full">
+                                <div className="max-w-[1520px] mx-auto w-full">
                                     {/* Detailed Season Summary - Removed as per request (moved to archive) */}
                                     {/* <SeasonSummary year={year} stats={seasonStats} /> */}
 
@@ -511,12 +532,25 @@ function CaiRun() {
                                                                     </div>
                                                                     <div className="grid grid-cols-2 gap-4 pt-6 mt-auto">
                                                                         <div className="flex items-center space-x-3">
-                                                                            <FaRegCalendarAlt className="text-gray-300" />
-                                                                            <div className="flex flex-col"><span className="text-[10px] uppercase text-gray-400">Date</span><span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{date}</span></div>
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-[10px] uppercase text-gray-400">Time</span>
+                                                                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                                                                                    {(() => {
+                                                                                        const seconds = run.moving_time;
+                                                                                        const h = Math.floor(seconds / 3600);
+                                                                                        const m = Math.floor((seconds % 3600) / 60);
+                                                                                        const s = seconds % 60;
+                                                                                        if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                                                                                        return `${m}:${s.toString().padStart(2, '0')}`;
+                                                                                    })()}
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
-                                                                        <div className="flex items-center space-x-3">
-                                                                            <FaRoad className="text-gray-300" />
-                                                                            <div className="flex flex-col"><span className="text-[10px] uppercase text-gray-400">Pace</span><span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{pace} /km</span></div>
+                                                                        <div className="flex items-center justify-end space-x-3">
+                                                                            <div className="flex flex-col items-end">
+                                                                                <span className="text-[10px] uppercase text-gray-400">Pace</span>
+                                                                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{pace} /km</span>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -652,9 +686,11 @@ function CaiRun() {
                                         </div>
                                     </motion.div>
                                     <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="flex flex-col justify-center pl-8 border-l border-gray-100 dark:border-zinc-800">
-                                        <div className="text-sm text-gray-400 uppercase tracking-wider mb-1">Calories</div>
+                                        <div className="text-sm text-gray-400 uppercase tracking-wider mb-1">Cadence</div>
                                         <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                                            {Math.round((selectedRun.distance / 1000) * 65)} <span className="text-lg text-gray-500 font-medium">kcal</span>
+                                            {selectedRun.steps && selectedRun.moving_time > 0
+                                                ? Math.round(selectedRun.steps / (selectedRun.moving_time / 60))
+                                                : '--'} <span className="text-lg text-gray-500 font-medium">spm</span>
                                         </div>
                                     </motion.div>
                                     {selectedRun.average_heartrate && (
@@ -689,7 +725,7 @@ function CaiRun() {
 
             {/* Minimalist Calendar Section */}
             <section className="px-6 pt-16 pb-32 bg-[#F5F5F7] dark:bg-black min-h-screen snap-start flex flex-col justify-center">
-                <ScrollAnimation className="max-w-7xl mx-auto w-full">
+                <ScrollAnimation className="max-w-[1520px] mx-auto w-full">
                     <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
 
                         <div className="flex items-center justify-between mb-8">

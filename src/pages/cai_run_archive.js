@@ -62,7 +62,25 @@ export default function CaiRunArchive() {
                         moving_time: moving_time,
                         type: 'Run',
                         source: 'NRC',
-                        average_heartrate: rawRun.average_heartrate,
+                        average_heartrate: (() => {
+                            // Try top level first
+                            if (rawRun.average_heartrate) return rawRun.average_heartrate;
+                            // Try summaries
+                            if (rawRun.summaries) {
+                                const hr = rawRun.summaries.find(s => s.metric === 'heart_rate' && s.summary === 'mean');
+                                if (hr) return hr.value;
+                            }
+                            return null;
+                        })(),
+                        average_cadence: (() => {
+                            if (rawRun.summaries) {
+                                const steps = rawRun.summaries.find(s => s.metric === 'steps' && s.summary === 'total');
+                                if (steps && moving_time > 0) {
+                                    return Math.round(steps.value / (moving_time / 60));
+                                }
+                            }
+                            return null;
+                        })(),
                         map: rawRun.map || null
                     };
                 });
@@ -233,26 +251,45 @@ export default function CaiRunArchive() {
                                                         </div>
                                                     )}
 
-                                                    <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-md text-white px-2 py-1 rounded-lg text-[10px] font-bold">
-                                                        {formatDuration(run.moving_time)}
-                                                    </div>
+
                                                 </div>
 
                                                 <div className="p-5">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <h3 className="font-bold text-sm line-clamp-1">{run.name}</h3>
-                                                        <span className="text-xs text-gray-400">
-                                                            {new Date(run.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                                        </span>
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        {/* Top Left: Distance */}
+                                                        <div>
+                                                            <div className="text-[10px] text-gray-400 uppercase font-bold mb-0.5">距离</div>
+                                                            <div className="flex items-baseline space-x-1">
+                                                                <h3 className="font-medium text-sm" style={{ fontFamily: 'Minecart LCD' }}>{(run.distance / 1000).toFixed(2)}</h3>
+                                                                <span className="text-[10px] text-gray-700 dark:text-gray-300" style={{ fontFamily: 'Minecart LCD' }}>km</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Top Right: Avg Pace */}
+                                                        <div className="text-right">
+                                                            <div className="text-[10px] text-gray-400 uppercase font-bold mb-0.5">平均配速</div>
+                                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300" style={{ fontFamily: 'Minecart LCD' }}>
+                                                                {formatPace(run.distance, run.moving_time)}<span className="text-[10px] ml-1" style={{ fontFamily: 'Minecart LCD' }}>/km</span>
+                                                            </span>
+                                                        </div>
                                                     </div>
 
-                                                    <div className="flex items-baseline space-x-1">
-                                                        <span className="text-2xl font-black tabular-nums">{(run.distance / 1000).toFixed(2)}</span>
-                                                        <span className="text-[10px] font-bold text-gray-400 uppercase">km</span>
-                                                    </div>
+                                                    <div className="flex items-end justify-between">
+                                                        {/* Bottom Left: Duration (Time) */}
+                                                        <div>
+                                                            <div className="text-[10px] text-gray-400 uppercase font-bold mb-0.5">用时</div>
+                                                            <span className="text-sm font-medium tabular-nums text-gray-900 dark:text-white" style={{ fontFamily: 'Minecart LCD' }}>
+                                                                {formatDuration(run.moving_time)}
+                                                            </span>
+                                                        </div>
 
-                                                    <div className="mt-2 text-xs font-medium text-gray-500">
-                                                        {formatPace(run.distance, run.moving_time)} /km
+                                                        {/* Bottom Right: Avg Heart Rate */}
+                                                        <div className="text-right mb-1">
+                                                            <div className="text-[10px] text-gray-400 uppercase font-bold mb-0.5">平均心率</div>
+                                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300" style={{ fontFamily: 'Minecart LCD' }}>
+                                                                {run.average_heartrate ? Math.round(run.average_heartrate) : '--'}<span className="text-[10px] ml-1" style={{ fontFamily: 'Minecart LCD' }}>bpm</span>
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </motion.div>
@@ -369,9 +406,9 @@ export default function CaiRunArchive() {
                                                 </div>
                                             </motion.div>
                                             <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="flex flex-col justify-center pl-8 border-l border-gray-100 dark:border-zinc-800">
-                                                <div className="text-sm text-gray-400 uppercase tracking-wider mb-1">Calories</div>
+                                                <div className="text-sm text-gray-400 uppercase tracking-wider mb-1">Cadence</div>
                                                 <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                                                    {Math.round((selectedRun.distance / 1000) * 65)} <span className="text-lg text-gray-500 font-medium">kcal</span>
+                                                    {selectedRun.average_cadence ? selectedRun.average_cadence : '--'} <span className="text-lg text-gray-500 font-medium">spm</span>
                                                 </div>
                                             </motion.div>
                                             {selectedRun.average_heartrate && (

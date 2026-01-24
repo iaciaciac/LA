@@ -371,7 +371,7 @@ const RecentActivityRows = ({ runs }) => {
         <div className="bg-[#1c1c1e] py-16 md:py-24 px-6 md:px-12 w-full rounded-[32px] border border-white/5 relative overflow-hidden mt-8"
             onClick={() => setGuide(null)}>
 
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-[1520px] mx-auto">
                 <div className="flex items-center justify-between mb-12">
                     <h3 className="text-3xl font-semibold text-white tracking-tight">
                         Recent Activity
@@ -553,9 +553,9 @@ const ProfessionalAnalysis = ({ runs }) => {
     const maxLoad = Math.max(...data.map(d => d.rawLoad));
 
     return (
-        <section className="bg-black pt-16 pb-0">
+        <section className="bg-black pt-[300px] pb-[300px]">
             {/* Constrained Container for Top Section */}
-            <div className="max-w-7xl mx-auto px-6 mb-16">
+            <div className="max-w-[1520px] mx-auto px-6 mb-16">
                 <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <ScrollAnimation>
                         <div>
@@ -829,7 +829,7 @@ const ProfessionalAnalysis = ({ runs }) => {
             </div>
 
             {/* Visual Data Stream for Recent Runs (Full Bleed) */}
-            <div className="w-full">
+            <div className="max-w-[1520px] mx-auto px-6">
                 <ScrollAnimation index={3}>
                     <RecentActivityRows runs={runs} />
                 </ScrollAnimation>
