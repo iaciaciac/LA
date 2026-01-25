@@ -1,176 +1,126 @@
 import React from 'react';
 import Navbar from './components/Navbar';
-import ScrollAnimation from './components/ScrollAnimation';
-
 import { client } from '../sanity/lib/client';
 import { groq } from 'next-sanity';
+import { PortableText } from '@portabletext/react';
+import imageUrlBuilder from '@sanity/image-url';
+import localFont from 'next/font/local';
 
-// About Page Component (Dynamic CMS)
-function CaiAbout({ pageData }) {
+// URL builder for inline images
+const builder = imageUrlBuilder(client);
+function urlFor(source) {
+  return builder.image(source);
+}
 
+// Portable Text Components definition
+const components = {
+  types: {
+    image: ({ value }) => {
+      if (!value?.asset?._ref) {
+        return null;
+      }
+      return (
+        <img
+          alt={value.alt || ' '}
+          loading="lazy"
+          src={urlFor(value).width(800).fit('max').auto('format').url()}
+          className="rounded-lg my-8 mx-auto"
+        />
+      );
+    }
+  }
+};
 
-  // If no content, show fallback or nothing
-  if (!pageData || !pageData.contentBlocks) {
+// Manually configure Geist Mono from local file to avoid ESM loader errors
+const geistMono = localFont({
+  src: '../../public/fonts/GeistMono.woff2',
+  variable: '--font-geist-mono',
+});
+
+// Blog Page Component (Refactored from Housea/Photos)
+function CaiPhotos({ posts }) {
+  if (!posts || posts.length === 0) {
     return (
-      <div>
+      <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white font-mono">
         <Navbar />
-        <div className="pt-32 px-6 text-center text-gray-500 font-light">
-          Content not found. Please create "About Page" in Sanity Studio.
+        <div className="pt-32 px-6 text-center text-sm">
+          No posts found. Go to Sanity Studio to write your first post!
         </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className={`${geistMono.className} min-h-screen bg-white dark:bg-black text-black dark:text-white transition-colors duration-500`}>
       <Navbar />
-      <div className="block pt-[600px]">
-        <div className="lg:flex lg:flex-wrap gap-8 items-start" style={{ marginLeft: '24px', marginRight: '24px' }}>
 
-          {/* Left Column */}
-          <div className="flex-1 flex flex-col gap-8">
-            {pageData.contentBlocks.filter((_, i) => i % 2 === 0).map((block, index) => {
-              if (block._type === 'introBlock') {
-                return (
-                  <div key={block._key} className="flex flex-col">
-                    <ScrollAnimation>
-                      <div className="flex flex-col bg-background-300 border-solid border border-background-200 dark:bg-gray-100 dark:bg-background-800 rounded-xl px-6 lg:px-10 py-8 pt-12">
-                        {block.icon?.asset?.url && (
-                          <img alt="icon" src={block.icon.asset.url} width="44" height="44" className="block" />
-                        )}
-                        <div className="dark:text-gray-900 text-font-500 tracking-wide text-xl lg:text-2xl leading-tight font-light pt-12">
-                          <span className="font-bold">{block.heading}</span>
-                        </div>
-                        <div className="pt-4 pb-2 text-base dark:text-gray-500 text-font-500 font-light">
-                          {block.subheading}
-                        </div>
-                        {block.image?.asset?.url && (
-                          <img alt="intro" src={block.image.asset.url} className="rounded-xl w-auto h-auto max-w-full mx-auto mt-8" />
-                        )}
-                      </div>
-                    </ScrollAnimation>
-                  </div>
-                );
-              }
-              if (block._type === 'projectBlock') {
-                return (
-                  <div key={block._key} className="flex flex-col">
-                    <ScrollAnimation index={index}>
-                      <div className="flex flex-col bg-background-300 border-solid border border-background-200 dark:bg-gray-100 rounded-xl px-6 lg:px-10 py-8 pt-12">
-                        {block.linkUrl && (
-                          <a href={block.linkUrl} target="_blank" rel="noopener noreferrer">
-                            <img alt="link" src="/images/Instagram_Glyph_Black.png" width="22" height="22" className="block opacity-80 hover:opacity-100 transition-opacity" />
-                          </a>
-                        )}
-                        <div className="text-font-900 dark:text-font-200 tracking-wide text-xl lg:text-2xl leading-tight font-light pt-12">
-                          <span className="font-bold">{block.title}</span> {block.description}
-                        </div>
-                        <div className="pt-8 pb-4 text-base dark:text-gray-500 text-font-500 font-light">
-                          {block.subtext}
-                        </div>
-                        {block.image?.asset?.url && (
-                          <img alt="project" src={block.image.asset.url} className="rounded-xl w-auto h-auto max-w-full mx-auto mt-8" />
-                        )}
-                      </div>
-                    </ScrollAnimation>
-                  </div>
-                );
-              }
-              return null;
-            })}
-          </div>
+      <main className="pt-32 pb-20 px-6 md:px-12 max-w-3xl mx-auto flex flex-col gap-16">
+        {posts.map((post) => {
+          // Mapping 'post' schema to UI
+          return (
+            <article key={post._id} className="flex flex-col gap-4 border-b border-gray-100 dark:border-zinc-800 pb-12 last:border-0">
+              {/* Optional Main Image (Cover) - Only show if it exists. User complained about size, so constrained max-height */}
+              {post.mainImage?.asset?.url && (
+                <img
+                  src={post.mainImage.asset.url}
+                  alt={post.title || 'Blog Post Image'}
+                  className="w-full h-auto rounded-lg mb-6 object-cover max-h-[500px]"
+                />
+              )}
 
-          {/* Right Column */}
-          <div className="flex-1 flex flex-col gap-8">
-            {pageData.contentBlocks.filter((_, i) => i % 2 !== 0).map((block, index) => {
-              if (block._type === 'introBlock') {
-                return (
-                  <div key={block._key} className="flex flex-col">
-                    <ScrollAnimation>
-                      <div className="flex flex-col bg-background-300 border-solid border border-background-200 dark:bg-gray-100 dark:bg-background-800 rounded-xl px-6 lg:px-10 py-8 pt-12">
-                        {block.icon?.asset?.url && (
-                          <img alt="icon" src={block.icon.asset.url} width="44" height="44" className="block" />
-                        )}
-                        <div className="dark:text-gray-900 text-font-500 tracking-wide text-xl lg:text-2xl leading-tight font-light pt-12">
-                          <span className="font-bold">{block.heading}</span>
-                        </div>
-                        <div className="pt-4 pb-2 text-base dark:text-gray-500 text-font-500 font-light">
-                          {block.subheading}
-                        </div>
-                        {block.image?.asset?.url && (
-                          <img alt="intro" src={block.image.asset.url} className="rounded-xl w-auto h-auto max-w-full mx-auto mt-8" />
-                        )}
-                      </div>
-                    </ScrollAnimation>
-                  </div>
-                );
-              }
-              if (block._type === 'projectBlock') {
-                return (
-                  <div key={block._key} className="flex flex-col">
-                    <ScrollAnimation index={index}>
-                      <div className="flex flex-col bg-background-300 border-solid border border-background-200 dark:bg-gray-100 rounded-xl px-6 lg:px-10 py-8 pt-12">
-                        {block.linkUrl && (
-                          <a href={block.linkUrl} target="_blank" rel="noopener noreferrer">
-                            <img alt="link" src="/images/Instagram_Glyph_Black.png" width="22" height="22" className="block opacity-80 hover:opacity-100 transition-opacity" />
-                          </a>
-                        )}
-                        <div className="text-font-900 dark:text-font-200 tracking-wide text-xl lg:text-2xl leading-tight font-light pt-12">
-                          <span className="font-bold">{block.title}</span> {block.description}
-                        </div>
-                        <div className="pt-8 pb-4 text-base dark:text-gray-500 text-font-500 font-light">
-                          {block.subtext}
-                        </div>
-                        {block.image?.asset?.url && (
-                          <img alt="project" src={block.image.asset.url} className="rounded-xl w-auto h-auto max-w-full mx-auto mt-8" />
-                        )}
-                      </div>
-                    </ScrollAnimation>
-                  </div>
-                );
-              }
-              return null;
-            })}
-          </div>
+              {post.title && (
+                <h2 className="text-2xl font-bold tracking-tight">{post.title}</h2>
+              )}
 
-        </div>
-      </div>
+              {post.publishedAt && (
+                <div className="text-xs text-gray-400 font-light mb-2">
+                  {new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </div>
+              )}
+
+              {/* Render Portable Text (supports multiple images, bold, links, etc.) */}
+              {post.body && (
+                <div className="prose dark:prose-invert prose-lg max-w-none prose-p:leading-relaxed prose-a:text-blue-500 prose-img:rounded-lg">
+                  <PortableText value={post.body} components={components} />
+                </div>
+              )}
+            </article>
+          )
+        })}
+      </main>
     </div>
   );
 }
 
-// Fetch Singleton Page Data
 export const getStaticProps = async () => {
-  const query = groq`*[_type == "aboutPage"][0] {
+  const query = groq`*[_type == "post"] | order(publishedAt desc) {
+    _id,
     title,
-    contentBlocks[] {
-      ...,
-      _type,
-      _key,
-      icon {
-        asset->{ url }
-      },
-      image {
-        asset->{
-          url,
-          metadata {
-            dimensions {
-              aspectRatio
-            }
+    publishedAt,
+    body,
+    mainImage {
+      asset->{
+        _id,
+        url,
+        metadata {
+          dimensions {
+            width,
+            height,
+            aspectRatio
           }
         }
       }
     }
   }`;
 
-  const pageData = await client.fetch(query);
+  const posts = await client.fetch(query);
 
   return {
     props: {
-      pageData: pageData || null
+      posts: posts || []
     },
     revalidate: 1,
   };
 };
 
-export default CaiAbout;
+export default CaiPhotos;

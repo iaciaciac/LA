@@ -52,6 +52,24 @@ const PhotoModal = ({ photo, onClose }) => {
     const currentItem = items[currentIndex] || items[0];
     const hasMultiple = items.length > 1;
 
+    // DEBUG: Check data integrity
+    React.useEffect(() => {
+        if (photo) {
+            console.log('PhotoModal received photo:', photo);
+            console.log('Calculated items:', items);
+            console.log('Current Item:', currentItem);
+
+            if (currentItem?.image) {
+                try {
+                    const url = urlFor(currentItem.image).format('jpg').width(1200).url();
+                    console.log('Generated Image URL:', url);
+                } catch (e) {
+                    console.error('Error generating image URL:', e);
+                }
+            }
+        }
+    }, [photo, currentItem, items]);
+
     // Reset index when modal opens with a new photo object
     useEffect(() => {
         setCurrentIndex(0);
@@ -204,7 +222,7 @@ const PhotoModal = ({ photo, onClose }) => {
                                     <video
                                         key={currentItem.video.asset.url} // Force re-render on change
                                         src={currentItem.video.asset.url}
-                                        poster={currentItem.image ? urlFor(currentItem.image).auto('format').width(1200).url() : undefined}
+                                        poster={currentItem.image ? urlFor(currentItem.image).format('jpg').width(1200).url() : undefined}
                                         autoPlay
                                         loop
                                         muted={true}
@@ -234,7 +252,7 @@ const PhotoModal = ({ photo, onClose }) => {
                                     <video
                                         key={currentItem.video.asset.url}
                                         src={currentItem.video.asset.url}
-                                        poster={currentItem.image ? urlFor(currentItem.image).auto('format').width(1200).url() : undefined}
+                                        poster={currentItem.image ? urlFor(currentItem.image).format('jpg').width(1200).url() : undefined}
                                         controls
                                         autoPlay
                                         playsInline
@@ -246,7 +264,7 @@ const PhotoModal = ({ photo, onClose }) => {
                         ) : (
                             currentItem.image && (
                                 <Image
-                                    src={urlFor(currentItem.image).auto('format').width(1200).url()}
+                                    src={urlFor(currentItem.image).format('jpg').width(1200).url()}
                                     alt={currentItem.title || 'Detail view'}
                                     className="object-cover w-full h-full"
                                     fill

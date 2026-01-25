@@ -18,7 +18,7 @@ function CaiDamn({ photos }) {
   return (
     <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500">
       <Navbar />
-      <div className="pt-8 mb-4 px-2 md:px-16 lg:px-40 2xl:px-48">
+      <div className="pt-[400px] mb-4 px-2 md:px-16 lg:px-40 2xl:px-48">
         <StoryTray photos={storyPhotos} onClick={setSelectedPhoto} />
       </div>
       {/* Photo Gallery Grid / 照片墙网格 */}
@@ -65,6 +65,7 @@ export const getStaticProps = async () => {
       isLivePhoto,
       image {
         asset->{
+          _id,
           url,
           metadata {
             dimensions {

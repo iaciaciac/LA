@@ -3,7 +3,7 @@ import Navbar from './components/Navbar';
 
 import DarkModeToggle from './components/DarkModeToggle';
 import Mylife from './components/About_me/Mylife';
-import RunStats from './components/RunStats';
+// import RunStats from './components/RunStats';
 
 import Mylifed from './components/About_me/Mylifed';
 import Mylifec from './components/About_me/Mylifec';
@@ -19,11 +19,11 @@ import { client } from '../sanity/lib/client';
 function Index({ headline }) {
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500">
+    <div className="min-h-screen bg-white dark:bg-black bg-[radial-gradient(rgba(0,0,0,0.08)_5%,transparent_5%)] dark:bg-[radial-gradient(rgba(255,255,255,.18)_5%,transparent_5%)] bg-[position:0%_0%] bg-[length:25px_25px] transition-colors duration-500">
       <Navbar />
 
       <Mylife headline={headline} />
-      <RunStats />
+      {/* <RunStats /> */}
 
       <Mylifec />
     </div>

@@ -1,13 +1,13 @@
 export default {
     name: 'aboutPage',
-    title: 'About Page',
+    title: 'Photos Page',
     type: 'document',
     fields: [
         {
             name: 'title',
             title: 'Page Title',
             type: 'string',
-            initialValue: 'About Page',
+            initialValue: 'Photos Page',
             readOnly: true
         },
         {

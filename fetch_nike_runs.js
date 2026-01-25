@@ -1,266 +1,175 @@
-require('dotenv').config({ path: '.env.local' });
-const https = require('https');
 const fs = require('fs');
+const https = require('https');
+const path = require('path');
 
-// =================配置区域=================
-// Token (Valid per v3 script)
-// 安全修复：Token 已移至 .env.local 文件，防止硬编码泄露
-const ACCESS_TOKEN = process.env.NIKE_ACCESS_TOKEN;
+// ============================================
+// PASTE YOUR NIKE ACCESS TOKEN BELOW
+// ============================================
+const ACCESS_TOKEN = '';
+// Example: 'Bearer eyJhbGciOiJIUzI1NiIs...'
+
+const DATA_FILE = path.join(__dirname, 'public/data/nike_runs_final.json');
+
 if (!ACCESS_TOKEN) {
-    console.error('❌ 错误：未找到 NIKE_ACCESS_TOKEN，请检查 .env.local 文件。');
+    console.error("Error: Please open this script and paste your Nike Access Token into the 'ACCESS_TOKEN' variable.");
     process.exit(1);
 }
-// =========================================
 
-const headers = {
-    'Authorization': `Bearer ${ACCESS_TOKEN}`,
-    'Content-Type': 'application/json',
-    'User-Agent': 'Nike/24.12.0 (iPhone; iOS 16.0; Scale/3.00)'
-};
-
-// Polyline Encoder
-function encodePolyline(points) {
-    let str = '';
-    let lastLat = 0;
-    let lastLng = 0;
-
-    for (const point of points) {
-        let lat = Math.round(point[0] * 1e5);
-        let lng = Math.round(point[1] * 1e5);
-
-        let dLat = lat - lastLat;
-        let dLng = lng - lastLng;
-
-        lastLat = lat;
-        lastLng = lng;
-
-        str += encodeSigned(dLat);
-        str += encodeSigned(dLng);
+// 1. Read existing existing data to find where we left off
+let existingRuns = [];
+try {
+    if (fs.existsSync(DATA_FILE)) {
+        const fileContent = fs.readFileSync(DATA_FILE, 'utf8');
+        existingRuns = JSON.parse(fileContent);
+        console.log(`Loaded ${existingRuns.length} existing runs.`);
+    } else {
+        console.log("No existing data file found. Starting fresh.");
     }
-    return str;
+} catch (err) {
+    console.error("Error reading existing data:", err);
+    process.exit(1);
 }
 
-function encodeSigned(num) {
-    let sgn_num = num << 1;
-    if (num < 0) {
-        sgn_num = ~(sgn_num);
-    }
-    return encodeNumber(sgn_num);
-}
+// Helper to check if a run exists
+const existingIds = new Set(existingRuns.map(r => r.id));
 
-function encodeNumber(num) {
-    let str = '';
-    while (num >= 0x20) {
-        str += String.fromCharCode((0x20 | (num & 0x1f)) + 63);
-        num >>= 5;
-    }
-    str += String.fromCharCode(num + 63);
-    return str;
-}
+async function fetchActivities(afterId = null) {
+    // Note: The Nike API often uses 'before_id' to go backwards in time (pagination).
+    // To get NEW runs, we typically fetch the latest page (no param) and see what's new.
+    // If we need to go back further, we use 'before_id' from the paging.next.
+    // However, since we want *updates*, we can just fetch the landing page. 
+    // If there are MANY new runs, we might need to follow pagination until we hit a known ID.
 
-function fetchActivities(beforeId = null) {
-    let url = `https://api.nike.com/sport/v3/me/activities/before_time/${Date.now()}`;
-    if (beforeId) {
-        url = `https://api.nike.com/sport/v3/me/activities/before_id/${beforeId}`;
+    let newRuns = [];
+    let url = 'https://api.nike.com/sport/v3/me/activities/before_id?limit=100';
+    if (afterId) {
+        url = `https://api.nike.com/sport/v3/me/activities/before_id/${afterId}?limit=100`;
     }
 
-    console.log(`🌐 Fetching List... ${beforeId ? '(Paging: ' + beforeId + ')' : '(Initial)'}`);
+    // Since we want the LATEST, we start without a 'before_id' (or with a very future timestamp if that was supported, but 'before_id' is usually an ID or timestamp from the pagination cursor).
+    // Actually, 'before_id' implies "older than". 
+    // The default endpoint 'https://api.nike.com/sport/v3/me/activities/before_id?limit=100' usually gives the MOST RECENT activities.
 
-    return new Promise((resolve, reject) => {
-        const req = https.get(url, { headers }, (res) => {
-            let data = '';
-            if (res.statusCode !== 200) {
-                if (res.statusCode === 404 && beforeId) {
-                    resolve({ activities: [], paging: null });
-                    return;
-                }
-                reject(new Error(`List Request Failed: ${res.statusCode}`));
-                return;
+    // We will loop until we find a run that we already have.
+    let currentUrl = 'https://api.nike.com/sport/v3/me/activities/before_id?limit=100'; // Start with latest
+    let keepFetching = true;
+
+    while (keepFetching) {
+        console.log(`Fetching: ${currentUrl}`);
+        const data = await makeRequest(currentUrl);
+
+        if (!data || !data.activities) {
+            console.error("Error: Invalid response from Nike API.");
+            break;
+        }
+
+        const activities = data.activities;
+        if (activities.length === 0) {
+            console.log("No more activities found.");
+            break;
+        }
+
+        // Filter for valid runs and check if they are new
+        const validActivities = activities.filter(a => a.type === 'run');
+
+        let foundExisting = false;
+
+        for (const activity of validActivities) {
+            if (existingIds.has(activity.id)) {
+                foundExisting = true;
+                // If we found an existing run, we might have bridged the gap if we are just updating.
+                // However, be careful if runs were deleted/re-synced. 
+                // For a simple updater, stopping on the first known ID is usually safe enough 
+                // assuming reliable ordering.
+                console.log(`Found known run ID ${activity.id}. Stopping fetch loop.`);
+                keepFetching = false;
+                break;
+            } else {
+                newRuns.push(activity);
+                existingIds.add(activity.id); // Valid during this run
             }
-            res.on('data', (chunk) => { data += chunk; });
-            res.on('end', () => {
-                try {
-                    resolve(JSON.parse(data));
-                } catch (e) { reject(e); }
-            });
-        });
-        req.on('error', (e) => { reject(e); });
-    });
+        }
+
+        if (keepFetching) {
+            if (data.paging && data.paging.before_id) {
+                currentUrl = `https://api.nike.com/sport/v3/me/activities/before_id/${data.paging.before_id}?limit=100`;
+            } else {
+                console.log("No pagination 'before_id' found. Stopping.");
+                break;
+            }
+        }
+    }
+
+    return newRuns;
 }
 
-function fetchRunDetail(id) {
-    const url = `https://api.nike.com/sport/v3/me/activity/${id}?metrics=ALL`;
-    console.log(`🔍 Fetching Details & Map: ${id}...`);
-
+function makeRequest(url) {
     return new Promise((resolve, reject) => {
-        const req = https.get(url, { headers }, (res) => {
-            let data = '';
+        const options = {
+            headers: {
+                'Authorization': ACCESS_TOKEN,
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
+            }
+        };
+
+        https.get(url, options, (res) => {
             if (res.statusCode !== 200) {
-                console.log(`⚠️ Detail failed (${res.statusCode}), skipping map.`);
+                console.error(`Status Code: ${res.statusCode}`);
+                res.resume(); // consume response to free up memory
+                if (res.statusCode === 401) {
+                    console.error("Authentication failed. Please check your ACCESS_TOKEN.");
+                }
                 resolve(null);
                 return;
             }
+
+            let data = '';
             res.on('data', (chunk) => { data += chunk; });
             res.on('end', () => {
                 try {
                     resolve(JSON.parse(data));
-                } catch (e) { resolve(null); }
+                } catch (e) {
+                    console.error("Error parsing JSON:", e);
+                    resolve(null);
+                }
             });
+        }).on('error', (err) => {
+            console.error("Network error:", err);
+            reject(err);
         });
-        req.on('error', (e) => { resolve(null); });
     });
 }
 
-async function main() {
-    let allRuns = [];
-    let nextBeforeId = null;
-    let hasMore = true;
-    let pageCount = 0;
-    const MAX_PAGES = 100;
+// Main Execution
+(async () => {
+    console.log("Starting Nike data fetch...");
+    const newItems = await fetchActivities();
 
-    console.log("🚀 Starting RAW Data Sync...");
+    if (newItems.length > 0) {
+        console.log(`Found ${newItems.length} new runs.`);
 
-    try {
-        while (hasMore && pageCount < MAX_PAGES) {
-            const response = await fetchActivities(nextBeforeId);
-            pageCount++;
+        // Merge new runs at the BEGINNING of the array (assuming we want desc order)
+        // Check sort order of existing file. Usually it's by date.
 
-            if (response.activities && response.activities.length > 0) {
-                const runs = response.activities.filter(act => act.type === 'run');
+        // Let's sort everything by start_epoch_ms to be safe
+        const allRuns = [...newItems, ...existingRuns];
 
-                // Load static data for map fallback (only once per page loop is fine, or move outside - moved inside for safety in this specific edit scope but inefficient. Better to check if loaded.)
-                // Actually, let's load it ONCE at the top of the function properly. 
-                // Since I am replacing this block, I will insert the loading logic here but wrapped to only execute once if possible, 
-                // OR I can just do a multi-replace.
-                // Simpler: I will just rewrite the loop content as requested.
+        // Remove duplicates just in case (by ID)
+        const uniqueRunsMap = new Map();
+        allRuns.forEach(r => uniqueRunsMap.set(r.id, r));
+        const uniqueRuns = Array.from(uniqueRunsMap.values());
 
-                // Process runs
-                const processedRuns = [];
-                const FETCH_DETAIL_LIMIT = (pageCount === 1) ? 30 : 0;
+        // Sort: Newest first?
+        // Let's check existing file order.
+        // Usually newest is at top or bottom? 
+        // Based on the 'before_id' logic, newer things come first from API. 
+        // Let's standardise on descending date (newest first).
+        uniqueRuns.sort((a, b) => b.start_epoch_ms - a.start_epoch_ms);
 
-                // Load static data (Sync read is fine here, script is local)
-                let staticDataMap = new Map();
-                try {
-                    if (pageCount === 1) { // Log only once
-                        const STATIC_DATA_PATH = 'src/data/nike_runs_transformed.json';
-                        if (fs.existsSync(STATIC_DATA_PATH)) {
-                            const staticRaw = JSON.parse(fs.readFileSync(STATIC_DATA_PATH, 'utf8'));
-                            staticRaw.forEach(r => {
-                                if (r.id && r.map && r.map.summary_polyline) {
-                                    staticDataMap.set(r.id, r.map.summary_polyline);
-                                }
-                            });
-                            console.log(`📚 Loaded ${staticDataMap.size} historical maps for potential merging.`);
-                        }
-                    } else {
-                        // Reloading every page is inefficient but safe for this quick script. 
-                        // To avoid spamming log, I suppressed valid log above.
-                        // Actually better to just read it every time to keep code simple in this block replacer.
-                        const STATIC_DATA_PATH = 'src/data/nike_runs_transformed.json';
-                        if (fs.existsSync(STATIC_DATA_PATH)) {
-                            const staticRaw = JSON.parse(fs.readFileSync(STATIC_DATA_PATH, 'utf8'));
-                            staticRaw.forEach(r => {
-                                if (r.id && r.map && r.map.summary_polyline) {
-                                    staticDataMap.set(r.id, r.map.summary_polyline);
-                                }
-                            });
-                        }
-                    }
-                } catch (e) { }
-
-                for (let i = 0; i < runs.length; i++) {
-                    const run = runs[i];
-
-                    // --- Formatted Fields (Required by existing App) ---
-                    const title = run.tags && run.tags['com.nike.name'] ? run.tags['com.nike.name'] : 'Run';
-                    const durationMs = run.active_duration_ms || 0;
-                    const seconds = Math.floor((durationMs / 1000) % 60);
-                    const minutes = Math.floor((durationMs / (1000 * 60)) % 60);
-                    const hours = Math.floor((durationMs / (1000 * 60 * 60)));
-                    const durationStr = hours > 0
-                        ? `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-                        : `${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-                    const getMetric = (name, type = 'total') => {
-                        if (!run.summaries) return 0;
-                        const item = run.summaries.find(s => s.metric === name && s.summary === type);
-                        return item ? item.value : 0;
-                    };
-                    const distance = getMetric('distance', 'total');
-                    const calories = getMetric('calories', 'total');
-                    const pace = getMetric('pace', 'mean');
-
-                    let polyline = null;
-                    let fullDetail = null;
-
-                    // Fetch Detail for Map
-                    if (i < FETCH_DETAIL_LIMIT) {
-                        try {
-                            fullDetail = await fetchRunDetail(run.id);
-                            if (fullDetail && fullDetail.metrics) {
-                                const latM = fullDetail.metrics.find(m => m.type === 'latitude');
-                                const lonM = fullDetail.metrics.find(m => m.type === 'longitude');
-                                if (latM && lonM && latM.values) {
-                                    const points = latM.values.map((v, idx) => [v.value, lonM.values[idx].value]);
-                                    if (points.length > 0) {
-                                        polyline = encodePolyline(points);
-                                        console.log(`   🗺️ Map encoded (${polyline.length} chars)`);
-                                    }
-                                }
-                            }
-                            await new Promise(r => setTimeout(r, 1000));
-                        } catch (err) {
-                            console.error(`   ❌ Map error: ${err.message}`);
-                        }
-                    }
-
-                    // --- Construct Object ---
-                    // We include ALL original 'run' properties implicitly or explicitly
-                    // And add the formatted ones for the app.
-                    const runObj = {
-                        ...run, // PRESERVE ALL ORIGINAL FIELDS (Raw Data)
-
-                        // Compat fields
-                        date: new Date(run.start_epoch_ms).toISOString(),
-                        distance_km: distance.toFixed(2),
-                        duration_str: durationStr,
-                        pace: pace.toFixed(2),
-                        calories: Math.round(calories),
-                        title: title
-                    };
-
-                    if (polyline) {
-                        runObj.map = { summary_polyline: polyline };
-                    } else if (staticDataMap && staticDataMap.has(run.id)) {
-                        // Merge historical map
-                        runObj.map = { summary_polyline: staticDataMap.get(run.id) };
-                    }
-
-                    processedRuns.push(runObj);
-                }
-
-                allRuns = allRuns.concat(processedRuns);
-                console.log(`✅ Page ${pageCount} done. (${processedRuns.length} runs)`);
-
-                if (response.paging && response.paging.before_id) {
-                    nextBeforeId = response.paging.before_id;
-                } else {
-                    hasMore = false;
-                }
-            } else {
-                hasMore = false;
-            }
-            await new Promise(r => setTimeout(r, 500));
-        }
-
-        allRuns.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        const filename = 'public/data/nike_runs_final.json';
-        fs.writeFileSync(filename, JSON.stringify(allRuns, null, 2));
-        console.log(`\n🎉 Sync Complete! ${allRuns.length} runs saved to ${filename}`);
-
-    } catch (error) {
-        console.error('\n❌ Fatal Error:', error.message);
+        fs.writeFileSync(DATA_FILE, JSON.stringify(uniqueRuns, null, 2));
+        console.log(`Successfully updated ${DATA_FILE}. Total runs: ${uniqueRuns.length}`);
+    } else {
+        console.log("No new runs found.");
     }
-}
-main();
+})();
