@@ -38,9 +38,7 @@ const Navbar = () => {
         </div>
 
         <div className="flex gap-4 md:gap-8 text-xs font-medium overflow-x-auto no-scrollbar items-center" style={{ color: 'rgb(var(--foreground-rgb))' }}>
-          <Link href="/" className="shrink-0 hidden md:block">
-            <span className="relative opacity-80 hover:opacity-100 transition-opacity">Home</span>
-          </Link>
+
           <Link href="/cai_photos" className="shrink-0">
             <span className="relative opacity-80 hover:opacity-100 transition-opacity">Photos</span>
           </Link>

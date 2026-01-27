@@ -51,10 +51,10 @@ function CaiPhotos({ posts }) {
   }
 
   return (
-    <div className={`${geistMono.className} min-h-screen bg-white dark:bg-black text-black dark:text-white transition-colors duration-500`}>
+    <div className={`${geistMono.className} min-h-screen bg-white dark:bg-black text-black dark:text-[#D7D7DB] transition-colors duration-500 text-[14px] leading-[21px]`}>
       <Navbar />
 
-      <main className="pt-32 pb-20 px-6 md:px-12 max-w-3xl mx-auto flex flex-col gap-16">
+      <main className="pt-32 pb-20 px-6 md:px-16 max-w-3xl mx-auto flex flex-col gap-6">
         {posts.map((post) => {
           // Mapping 'post' schema to UI
           return (
@@ -69,7 +69,7 @@ function CaiPhotos({ posts }) {
               )}
 
               {post.title && (
-                <h2 className="text-2xl font-bold tracking-tight">{post.title}</h2>
+                <h2 className="text-sm font-normal tracking-widest mb-4 uppercase">{post.title}</h2>
               )}
 
               {post.publishedAt && (
@@ -80,7 +80,7 @@ function CaiPhotos({ posts }) {
 
               {/* Render Portable Text (supports multiple images, bold, links, etc.) */}
               {post.body && (
-                <div className="prose dark:prose-invert prose-lg max-w-none prose-p:leading-relaxed prose-a:text-blue-500 prose-img:rounded-lg">
+                <div className="prose dark:prose-invert prose-sm max-w-none prose-p:leading-[21px] prose-p:mb-0 prose-headings:text-sm prose-headings:font-normal prose-a:text-blue-500 prose-img:rounded-lg font-mono">
                   <PortableText value={post.body} components={components} />
                 </div>
               )}

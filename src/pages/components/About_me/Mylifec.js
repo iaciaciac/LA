@@ -12,7 +12,7 @@ const Mylifec = () => {
       </div>
       <div className="flex items-center">
         <a href="mailto:i@caicaicai.me" className="hover:no-underline">
-          email
+          Email
         </a>
       </div>
     </footer>

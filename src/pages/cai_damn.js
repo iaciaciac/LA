@@ -2,6 +2,7 @@ import React from 'react';
 import Navbar from './components/Navbar';
 import PhotoGallery from './components/PhotoGallery';
 import StoryTray from './components/StoryTray';
+import Typewriter from './components/Typewriter';
 import { client } from '../sanity/lib/client';
 import { groq } from 'next-sanity';
 
@@ -16,7 +17,18 @@ function CaiDamn({ photos }) {
   const storyPhotos = photos?.filter(p => Array.isArray(p.tags) && p.tags.length > 0) || [];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500">
+    <div className="relative min-h-screen bg-white dark:bg-black transition-colors duration-500">
+      <div className="absolute top-0 left-0 w-full h-[650px] bg-[radial-gradient(rgba(0,0,0,0.08)_5%,transparent_5%)] dark:bg-[radial-gradient(rgba(255,255,255,.18)_5%,transparent_5%)] bg-[position:0%_0%] bg-[length:25px_25px] pointer-events-none z-0"></div>
+
+      {/* Typewriter Header */}
+      <div className="absolute top-0 left-0 w-full h-[650px] flex items-center justify-center pointer-events-none z-10 select-none pb-32" style={{
+        fontFamily: 'GeistMono, ui-monospace, SFMono-Regular, "Roboto Mono", Menlo, Monaco, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace'
+      }}>
+        <h1 className="text-sm font-normal tracking-widest text-black dark:text-white uppercase">
+          <Typewriter text="DAMN" delay={150} />
+        </h1>
+      </div>
+
       <Navbar />
       <div className="pt-[400px] mb-4 px-2 md:px-16 lg:px-40 2xl:px-48">
         <StoryTray photos={storyPhotos} onClick={setSelectedPhoto} />

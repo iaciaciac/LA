@@ -22,7 +22,7 @@ const StickyHeader = ({ yearTotal = '0.00', runCount = 0 }) => {
 
     return (
         <div className="sticky top-0 mt-[44px] z-40 w-full border-b border-gray-200/50 dark:border-zinc-800/50 bg-white/70 dark:bg-black/70 backdrop-blur-[20px] backdrop-saturate-[180%] transition-colors duration-500">
-            <div className="max-w-7xl mx-auto px-6 md:px-12 h-[52px] flex items-center justify-between">
+            <div className="w-full px-4 md:px-12 h-[52px] flex items-center justify-between">
                 {/* Left: Branding */}
                 <span className="text-[10px] md:text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
                     {dateStr} <span className="hidden md:inline">{timeStr}</span> You have run <span style={{ color: '#AAFB00' }}>{yearTotal}km</span>

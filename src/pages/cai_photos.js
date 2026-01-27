@@ -5,6 +5,8 @@ import ScrollAnimation from './components/ScrollAnimation';
 import { client } from '../sanity/lib/client';
 import { groq } from 'next-sanity';
 
+import HeroText from './components/HeroText';
+
 // About Page Component (Dynamic CMS)
 function CaiAbout({ pageData }) {
 
@@ -27,6 +29,7 @@ function CaiAbout({ pageData }) {
   return (
     <div className="relative min-h-screen bg-white dark:bg-black transition-colors duration-500">
       <div className="absolute top-0 left-0 w-full h-[650px] bg-[radial-gradient(rgba(0,0,0,0.08)_5%,transparent_5%)] dark:bg-[radial-gradient(rgba(255,255,255,.18)_5%,transparent_5%)] bg-[position:0%_0%] bg-[length:25px_25px] pointer-events-none z-0"></div>
+      <HeroText />
       <Navbar />
       <div className="block pt-[600px]">
         <div className="flex flex-col lg:flex-row lg:flex-wrap gap-8 items-start" style={{ marginLeft: '24px', marginRight: '24px' }}>
