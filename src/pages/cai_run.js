@@ -308,8 +308,8 @@ function CaiRun() {
                     {/* Progress Ring */}
 
                     {latestRun ? (
-                        <ScrollAnimation className="flex items-center justify-center mb-20">
-                            <div className="relative w-[85vw] md:w-[70vh] lg:w-[80vh] max-w-[1200px] aspect-square transition-all duration-500">
+                        <ScrollAnimation className="flex items-center justify-center mb-16 md:mb-20">
+                            <div className="relative w-[85vw] max-w-[380px] md:max-w-none md:w-[60vh] lg:w-[70vh] aspect-square transition-all duration-500">
                                 <svg
                                     className="w-full h-full transform -rotate-90"
                                     width="1800"
@@ -346,7 +346,7 @@ function CaiRun() {
                                 </svg>
 
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <div className="text-[12vw] md:text-8xl lg:text-[10rem] font-black text-gray-900 dark:text-white mb-4 leading-none tracking-tighter transition-all duration-500">
+                                    <div className="text-[18vw] sm:text-[14vw] md:text-8xl lg:text-[10rem] font-black text-gray-900 dark:text-white mb-2 md:mb-4 leading-none tracking-tighter transition-all duration-500">
                                         {animateRing ? (
                                             <AnimatedNumber value={parseFloat(distanceKm)} />
                                         ) : (
@@ -375,30 +375,30 @@ function CaiRun() {
 
                     {/* Basic Stats */}
                     {latestRun ? (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 max-w-5xl mx-auto px-4">
                             <div className="text-center">
-                                <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Cadence</div>
-                                <div className="text-4xl font-bold text-gray-900 dark:text-white">
+                                <div className="text-[10px] md:text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Cadence</div>
+                                <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
                                     {cadence}
                                 </div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">spm</div>
+                                <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">spm</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Heart Rate</div>
-                                <div className="text-4xl font-bold text-gray-900 dark:text-white">
+                                <div className="text-[10px] md:text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Heart Rate</div>
+                                <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
                                     {latestRun.average_heartrate ? Math.round(latestRun.average_heartrate) : '--'}
                                 </div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">avg bpm</div>
+                                <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">avg bpm</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Pace</div>
-                                <div className="text-4xl font-bold text-gray-900 dark:text-white">{pace}</div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">/km</div>
+                                <div className="text-[10px] md:text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Pace</div>
+                                <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{pace}</div>
+                                <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">/km</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Time</div>
-                                <div className="text-4xl font-bold text-gray-900 dark:text-white">{durationMin}</div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">minutes</div>
+                                <div className="text-[10px] md:text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Time</div>
+                                <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{durationMin}</div>
+                                <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">minutes</div>
                             </div>
                         </div>
                     ) : (

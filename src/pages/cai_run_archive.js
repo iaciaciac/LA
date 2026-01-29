@@ -150,7 +150,7 @@ export default function CaiRunArchive() {
             {/* Apple Store Style Header */}
             <div className="pt-24 pb-8 sticky top-0 z-10 bg-[#F5F5F7]/90 dark:bg-black/90 backdrop-blur-xl transition-colors duration-500">
                 <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20">
-                    <div className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4">
+                    <div className="flex flex-col md:flex-row md:items-baseline md:gap-4">
                         <h1 className="text-4xl md:text-[48px] font-bold text-gray-500 dark:text-gray-400 tracking-tight">
                             Runs.
                         </h1>
@@ -234,7 +234,7 @@ export default function CaiRunArchive() {
                                 <section key={month.label} id={monthKey}>
                                     {/* Month header removed per user request */}
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:gap-8 gap-6">
                                         {month.runs.map(run => (
                                             <motion.div
                                                 key={run.id}
