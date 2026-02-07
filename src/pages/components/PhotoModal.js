@@ -158,9 +158,9 @@ const PhotoModal = ({ photo, onClose }) => {
     return (
         <React.Fragment>
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
-                {/* Backdrop */}
+                {/* Backdrop - Apple scrim: rgba(0,0,0,0.48) + 20px blur */}
                 <div
-                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    className="absolute inset-0 bg-[rgba(0,0,0,0.48)] backdrop-blur-[20px]"
                     onClick={handleClose}
                     style={overlayStyle}
                 />
@@ -254,7 +254,7 @@ const PhotoModal = ({ photo, onClose }) => {
                                 </div>
                             ) : (
                                 /* REGULAR VIDEO MODE */
-                                <div className="relative w-full h-full flex items-center justify-center bg-black" onClick={(e) => e.stopPropagation()}>
+                                <div className="relative w-full h-full flex items-center justify-center bg-black" onClick={(e) => e.stopPropagation()}> 
                                     <video
                                         key={currentItem.video.asset.url}
                                         src={currentItem.video.asset.url}
@@ -336,7 +336,7 @@ const PhotoModal = ({ photo, onClose }) => {
             {/* WeChat QR Code Modal */}
             {showWeChat && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowWeChat(false)} />
+                    <div className="absolute inset-0 bg-[rgba(0,0,0,0.48)] backdrop-blur-[20px]" onClick={() => setShowWeChat(false)} />
                     <div 
                         className="relative bg-white dark:bg-zinc-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center"
                         style={{
