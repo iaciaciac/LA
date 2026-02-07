@@ -22,9 +22,8 @@ const PhotoModal = ({ photo, onClose }) => {
     const [showWeChat, setShowWeChat] = React.useState(false);
     // State for carousel index
     const [currentIndex, setCurrentIndex] = React.useState(0);
-
-    // Calculate modal size for Desktop to perfectly fit image
-    const [modalStyle, setModalStyle] = React.useState({});
+    // State for enter/exit animation
+    const [isVisible, setIsVisible] = React.useState(false);
 
     // Normalize items: use gallery if exists, otherwise fallback to root photo items
     const items = React.useMemo(() => {
@@ -75,6 +74,17 @@ const PhotoModal = ({ photo, onClose }) => {
         setCurrentIndex(0);
     }, [photo?._id]); // Use ID dependency if available, otherwise photo object
 
+    // Trigger animation on mount
+    useEffect(() => {
+        if (photo) {
+            // Use requestAnimationFrame to ensure DOM is ready
+            requestAnimationFrame(() => {
+                setIsVisible(true);
+            });
+        }
+        return () => setIsVisible(false);
+    }, [photo]);
+
     // Navigation handlers
     const nextSlide = React.useCallback(() => {
         if (items.length > 1) {
@@ -93,7 +103,7 @@ const PhotoModal = ({ photo, onClose }) => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
                 if (showWeChat) setShowWeChat(false);
-                else onClose();
+                else handleClose();
             } else if (e.key === 'ArrowRight') {
                 nextSlide();
             } else if (e.key === 'ArrowLeft') {
@@ -102,7 +112,16 @@ const PhotoModal = ({ photo, onClose }) => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onClose, showWeChat, nextSlide, prevSlide]);
+    }, [showWeChat, nextSlide, prevSlide]);
+
+    // Handle close with animation
+    const handleClose = () => {
+        setIsVisible(false);
+        // Wait for animation to complete before calling onClose
+        setTimeout(() => {
+            onClose();
+        }, 370); // Match the transition duration
+    };
 
     // Lock body scroll
     useEffect(() => {
@@ -111,78 +130,57 @@ const PhotoModal = ({ photo, onClose }) => {
         return () => { document.body.style.overflow = 'auto'; };
     }, [photo]);
 
-    // Calculate dynamic size
-    const dimensions = currentItem?.image?.asset?.metadata?.dimensions;
-    const aspectRatio = dimensions ? dimensions.aspectRatio : 1;
-
-    React.useEffect(() => {
-        const calculateSize = () => {
-            if (window.innerWidth < 768) {
-                setModalStyle({}); // Reset for mobile
-                return;
-            }
-
-            const sidebarWidth = 400;
-            const padding = 80;
-            const maxHeight = window.innerHeight * 0.85;
-            const maxWidth = window.innerWidth - padding;
-            const maxImageWidth = maxWidth - sidebarWidth;
-
-            // Try fitting by height first
-            let imgHeight = maxHeight;
-            let imgWidth = imgHeight * aspectRatio;
-
-            // If width overflows, fit by width
-            if (imgWidth > maxImageWidth) {
-                imgWidth = maxImageWidth;
-                imgHeight = imgWidth / aspectRatio;
-            }
-
-            setModalStyle({
-                width: imgWidth + sidebarWidth,
-                height: imgHeight
-            });
-        };
-
-        if (photo) {
-            calculateSize();
-            window.addEventListener('resize', calculateSize);
-        }
-
-        return () => window.removeEventListener('resize', calculateSize);
-    }, [photo, aspectRatio, currentIndex]); // Recalculate when index changes (different aspect ratios)
+    // Calculate dynamic size - removed for Apple-style card layout
+    // const dimensions = currentItem?.image?.asset?.metadata?.dimensions;
+    // const aspectRatio = dimensions ? dimensions.aspectRatio : 1;
 
     if (!photo || !currentItem) return null;
 
     // Get current URL for sharing
     const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
+    // Animation styles
+    const overlayStyle = {
+        opacity: isVisible ? 1 : 0,
+        transition: 'opacity 0.3s cubic-bezier(.42,0,.58,1)'
+    };
+
+    const cardStyle = {
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'scale(1) translateY(0)' : 'scale(0.92) translateY(20px)',
+        transition: 'all 0.37s cubic-bezier(.6,0,.4,1)'
+    };
+
     return (
         <React.Fragment>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
                 {/* Backdrop */}
                 <div
-                    className="absolute inset-0 bg-black/95 backdrop-blur-sm transition-opacity"
-                    onClick={onClose}
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    onClick={handleClose}
+                    style={overlayStyle}
                 />
 
-                {/* Modal Content */}
+                {/* Modal Card */}
                 <div
-                    className="relative bg-black md:bg-white md:dark:bg-black rounded-xl overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in fade-in zoom-in-95 duration-300 group max-h-[90vh] w-full md:w-auto"
-                    style={modalStyle}
+                    className="relative bg-white dark:bg-zinc-900 rounded-[20px] overflow-hidden w-full max-w-[900px] max-h-[95vh] md:max-h-[85vh] flex flex-col"
+                    style={{
+                        ...cardStyle,
+                        boxShadow: '0 24px 64px 0 rgba(0,0,0,0.26), 0 1.5px 6px 0 rgba(0,0,0,0.04)'
+                    }}
                 >
-                    {/* Close Button Mobile */}
+                    {/* Close Button - Inside card, top-right */}
                     <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 z-50 p-2 bg-black/50 text-white rounded-full md:hidden"
+                        onClick={handleClose}
+                        className="absolute top-4 right-4 z-50 p-2 bg-black/20 backdrop-blur-md text-white rounded-full hover:bg-black/30 transition-colors"
                     >
                         <IoClose size={24} />
                     </button>
 
-                    {/* Left: Media Container */}
-                    <div className="relative bg-black flex items-center justify-center h-[50vh] md:h-full md:flex-1 md:min-w-0 group/video select-none">
+                    {/* Image Area - Top of card */}
+                    <div className="relative bg-black flex items-center justify-center max-h-[60vh] min-h-[40vh] overflow-hidden rounded-t-[20px] select-none group/video">
 
-                        {/* Navigation Buttons (Desktop Hover / Mobile Always visible if needed) */}
+                        {/* Navigation Buttons (Desktop Hover) */}
                         {hasMultiple && (
                             <>
                                 <button
@@ -241,7 +239,7 @@ const PhotoModal = ({ photo, onClose }) => {
                                                 e.currentTarget.classList.toggle('opacity-50', video.muted);
                                             }
                                         }}
-                                        className="absolute bottom-4 right-12 md:right-4 z-40 p-2 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all opacity-0 group-hover/video:opacity-100"
+                                        className="absolute bottom-4 right-4 z-40 p-2 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all opacity-0 group-hover/video:opacity-100"
                                     >
                                         <span className="text-xs font-medium px-1">Sound</span>
                                     </button>
@@ -266,18 +264,18 @@ const PhotoModal = ({ photo, onClose }) => {
                                 <Image
                                     src={urlFor(currentItem.image).format('jpg').width(1200).url()}
                                     alt={currentItem.title || 'Detail view'}
-                                    className="object-cover w-full h-full"
+                                    className="object-contain w-full h-full"
                                     fill
                                     priority
-                                    sizes="(max-width: 768px) 100vw, 80vw"
+                                    sizes="(max-width: 768px) 100vw, 900px"
                                     onClick={(e) => e.stopPropagation()}
                                 />
                             )
                         )}
                     </div>
 
-                    {/* Right: Info Container */}
-                    <div className="w-full md:w-[400px] flex-shrink-0 bg-white dark:bg-zinc-900 border-l border-gray-100 dark:border-zinc-800 flex flex-col h-auto md:h-full">
+                    {/* Info Area - Below image */}
+                    <div className="flex-1 overflow-y-auto bg-white dark:bg-zinc-900">
                         {/* Header */}
                         <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -286,13 +284,10 @@ const PhotoModal = ({ photo, onClose }) => {
                                 </div>
                                 <span className="font-bold text-sm text-gray-900 dark:text-white">caicaicai</span>
                             </div>
-                            <button onClick={onClose} className="hidden md:block text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                <IoClose size={24} />
-                            </button>
                         </div>
 
-                        {/* Scrollable Content */}
-                        <div className="flex-1 p-6 overflow-y-auto">
+                        {/* Content */}
+                        <div className="p-6">
                             {/* Pagination Counter */}
                             {hasMultiple && (
                                 <div className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">
@@ -328,18 +323,18 @@ const PhotoModal = ({ photo, onClose }) => {
                         </div>
                     </div>
                 </div>
-
-                {/* Close button outside */}
-                <button onClick={onClose} className="hidden md:block absolute top-6 right-6 text-white/70 hover:text-white transition-colors">
-                    <IoClose size={32} />
-                </button>
             </div>
 
             {/* WeChat QR Code Modal */}
             {showWeChat && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowWeChat(false)} />
-                    <div className="relative bg-white dark:bg-zinc-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
+                    <div 
+                        className="relative bg-white dark:bg-zinc-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center"
+                        style={{
+                            animation: 'fadeInScale 0.2s ease-out'
+                        }}
+                    >
                         <button onClick={() => setShowWeChat(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:hover:text-white">
                             <IoClose size={24} />
                         </button>
@@ -349,6 +344,18 @@ const PhotoModal = ({ photo, onClose }) => {
                         </div>
                         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">Scan with WeChat to share</p>
                     </div>
+                    <style jsx>{`
+                        @keyframes fadeInScale {
+                            from {
+                                opacity: 0;
+                                transform: scale(0.95);
+                            }
+                            to {
+                                opacity: 1;
+                                transform: scale(1);
+                            }
+                        }
+                    `}</style>
                 </div>
             )}
         </React.Fragment>
