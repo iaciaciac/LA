@@ -25,6 +25,12 @@
   }
 }
 
+.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
@@ -1273,7 +1279,7 @@ audio, canvas, embed, iframe, img, object, svg, video {
 body, html {
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: #fff;
+  background-color: rgb(var(--background-start-rgb));
   font-family:-apple-system, ui-sans-serif, system-ui, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji
 }
 

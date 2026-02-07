@@ -11,7 +11,7 @@ const Toplink = () => {
          
         </div>
     
-      <div className="text-xs font-light tracking-wide leading-relaxed antialiased text-font-700 dark:text-font-900">
+      <div className="text-xs font-light tracking-wide leading-relaxed antialiased text-font-700 dark:text-font-300">
       © 2024 
             </div>
       </div>
@@ -42,7 +42,7 @@ const Toplink = () => {
         style={{ color: 'transparent' }}
       />
         </div>
-        <div className="text-xs font-light tracking-wide leading-relaxed antialiased text-font-700 dark:text-font-900 mr-10">
+        <div className="text-xs font-light tracking-wide leading-relaxed antialiased text-font-700 dark:text-font-300 mr-10">
         Customer Service
             </div>
         
@@ -76,7 +76,7 @@ const Toplink = () => {
         </div>
         </div>
 
-<div className="text-xs font-light tracking-wide leading-relaxed antialiased text-font-700 dark:text-font-900 mr-10">
+<div className="text-xs font-light tracking-wide leading-relaxed antialiased text-font-700 dark:text-font-300 mr-10">
              +1 8122879931
             </div>
         
