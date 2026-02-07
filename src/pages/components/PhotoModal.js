@@ -160,7 +160,7 @@ const PhotoModal = ({ photo, onClose }) => {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
                 {/* Backdrop */}
                 <div
-                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    className="absolute inset-0 bg-[rgba(0,0,0,0.48)] backdrop-blur-[20px]"
                     onClick={handleClose}
                     style={overlayStyle}
                 />
