@@ -25,6 +25,10 @@ const PhotoModal = ({ photo, onClose }) => {
     // State for enter/exit animation
     const [isVisible, setIsVisible] = React.useState(false);
 
+    // Animation constants
+    const ANIMATION_DURATION = 370; // milliseconds
+    const CARD_BORDER_RADIUS = 20; // pixels
+
     // Normalize items: use gallery if exists, otherwise fallback to root photo items
     const items = React.useMemo(() => {
         if (!photo) return [];
@@ -98,6 +102,15 @@ const PhotoModal = ({ photo, onClose }) => {
         }
     }, [items.length]);
 
+    // Handle close with animation
+    const handleClose = React.useCallback(() => {
+        setIsVisible(false);
+        // Wait for animation to complete before calling onClose
+        setTimeout(() => {
+            onClose();
+        }, ANIMATION_DURATION);
+    }, [onClose]);
+
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -112,16 +125,7 @@ const PhotoModal = ({ photo, onClose }) => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [showWeChat, nextSlide, prevSlide]);
-
-    // Handle close with animation
-    const handleClose = () => {
-        setIsVisible(false);
-        // Wait for animation to complete before calling onClose
-        setTimeout(() => {
-            onClose();
-        }, 370); // Match the transition duration
-    };
+    }, [showWeChat, handleClose, nextSlide, prevSlide]);
 
     // Lock body scroll
     useEffect(() => {
@@ -148,7 +152,7 @@ const PhotoModal = ({ photo, onClose }) => {
     const cardStyle = {
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'scale(1) translateY(0)' : 'scale(0.92) translateY(20px)',
-        transition: 'all 0.37s cubic-bezier(.6,0,.4,1)'
+        transition: `all ${ANIMATION_DURATION / 1000}s cubic-bezier(.6,0,.4,1)`
     };
 
     return (
@@ -163,9 +167,10 @@ const PhotoModal = ({ photo, onClose }) => {
 
                 {/* Modal Card */}
                 <div
-                    className="relative bg-white dark:bg-zinc-900 rounded-[20px] overflow-hidden w-full max-w-[900px] max-h-[95vh] md:max-h-[85vh] flex flex-col"
+                    className="relative bg-white dark:bg-zinc-900 overflow-hidden w-full max-w-[900px] max-h-[95vh] md:max-h-[85vh] flex flex-col"
                     style={{
                         ...cardStyle,
+                        borderRadius: `${CARD_BORDER_RADIUS}px`,
                         boxShadow: '0 24px 64px 0 rgba(0,0,0,0.26), 0 1.5px 6px 0 rgba(0,0,0,0.04)'
                     }}
                 >
@@ -178,7 +183,10 @@ const PhotoModal = ({ photo, onClose }) => {
                     </button>
 
                     {/* Image Area - Top of card */}
-                    <div className="relative bg-black flex items-center justify-center max-h-[60vh] min-h-[40vh] overflow-hidden rounded-t-[20px] select-none group/video">
+                    <div 
+                        className="relative bg-black flex items-center justify-center max-h-[60vh] min-h-[40vh] overflow-hidden select-none group/video"
+                        style={{ borderRadius: `${CARD_BORDER_RADIUS}px ${CARD_BORDER_RADIUS}px 0 0` }}
+                    >
 
                         {/* Navigation Buttons (Desktop Hover) */}
                         {hasMultiple && (
