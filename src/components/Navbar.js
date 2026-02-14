@@ -55,6 +55,9 @@ const Navbar = () => {
           <Link href="/cai_damn" className="shrink-0">
             <span className="relative opacity-80 hover:opacity-100 transition-opacity">DAMN</span>
           </Link>
+          <Link href="/cai_power" className="shrink-0">
+            <span className="relative opacity-80 hover:opacity-100 transition-opacity">Power</span>
+          </Link>
           <Link href="/cai_about" className="shrink-0">
             <span className="relative opacity-80 hover:opacity-100 transition-opacity">About</span>
           </Link>

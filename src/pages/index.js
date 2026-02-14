@@ -7,6 +7,7 @@ import Mylife from '../components/About_me/Mylife';
 
 import Mylifed from '../components/About_me/Mylifed';
 import Mylifec from '../components/About_me/Mylifec';
+import AIVibeHub from '../components/AIVibeHub';
 
 
 
@@ -23,6 +24,7 @@ function Index({ headline }) {
       <Navbar />
 
       <Mylife headline={headline} />
+      <AIVibeHub />
       {/* <RunStats /> */}
 
       <Mylifec />

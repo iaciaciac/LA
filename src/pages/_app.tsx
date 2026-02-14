@@ -1,4 +1,5 @@
 import '@/styles/globals.css'
+import '@/styles/vibe-theme.css'
 import type { AppProps } from 'next/app'
 
 
