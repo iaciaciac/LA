@@ -1,5 +1,5 @@
 import React from 'react';
-import Navbar from './components/Navbar';
+import Navbar from '../components/Navbar';
 import { client } from '../sanity/lib/client';
 import { groq } from 'next-sanity';
 import { PortableText } from '@portabletext/react';

@@ -15,7 +15,7 @@ const Housea = ({ coverImage }) => {
         />
         <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center">
           <div className="text-font-900 tracking-wide text-2xl lg:text-3xl leading-tight font-light" style={{ padding: '0 15px' }}>
-            <span className="font-bold"> I haven't </span> decided yet!
+            <span className="font-bold"> I haven&apos;t </span> decided yet!
           </div>
         </div>
       </div>

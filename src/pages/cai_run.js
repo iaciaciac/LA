@@ -3,15 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
-import Navbar from './components/Navbar';
-import StickyHeader from './components/StickyHeader';
-import ScrollAnimation from './components/ScrollAnimation';
+import Navbar from '../components/Navbar';
+import StickyHeader from '../components/StickyHeader';
+import ScrollAnimation from '../components/ScrollAnimation';
 import useScrollRestoration from '../hooks/useScrollRestoration';
 import { FaRunning, FaRegCalendarAlt, FaRoad, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import runData from '../data/nike_runs_transformed.json';
-import SeasonSummary from './components/SeasonSummary';
-import ProfessionalAnalysis from './components/ProfessionalAnalysis';
-import GlobalHeatmap from './components/GlobalHeatmap';
+import SeasonSummary from '../components/SeasonSummary';
+import ProfessionalAnalysis from '../components/ProfessionalAnalysis';
+import GlobalHeatmap from '../components/GlobalHeatmap';
 import { animate } from "framer-motion";
 
 const AnimatedNumber = ({ value }) => {
@@ -33,7 +33,7 @@ const AnimatedNumber = ({ value }) => {
     return <span ref={ref} className="tabular-nums">0.00</span>;
 };
 
-const RunMap = dynamic(() => import('./components/RunMap'), {
+const RunMap = dynamic(() => import('../components/RunMap'), {
     loading: () => <div className="w-full h-32 bg-gray-100 dark:bg-zinc-800 rounded-2xl animate-pulse" />,
     ssr: false
 });

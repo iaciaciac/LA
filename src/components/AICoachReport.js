@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaRobot, FaSync, FaChartLine, FaRunning, FaTachometerAlt, FaMedal, FaQuoteLeft } from 'react-icons/fa';
-import { analyzeVDOT, calculateTrainingZones, predictRaceTimes, analyzeWeeklyVolume, analyzeAerobicEfficiency, generateTrainingSuggestion } from '../../lib/runScience';
+import { analyzeVDOT, calculateTrainingZones, predictRaceTimes, analyzeWeeklyVolume, analyzeAerobicEfficiency, generateTrainingSuggestion } from '../lib/runScience';
 
 const AICoachReport = ({ runs }) => {
     const [loading, setLoading] = useState(false);
@@ -46,7 +46,7 @@ const AICoachReport = ({ runs }) => {
 
         setLoading(true);
         setError(null);
-        setStructuredPlan(null);
+        // setStructuredPlan(null);
 
         try {
             const response = await fetch('/api/ai-coach', {
@@ -134,7 +134,7 @@ const AICoachReport = ({ runs }) => {
                                     <div className={`w-full md:w-auto px-6 py-4 rounded-xl border border-white/10 bg-white/5 flex flex-col items-center justify-center`}>
                                         <span className="text-xs text-zinc-500 uppercase font-bold mb-1">执行配速</span>
                                         <span className={`text-3xl font-black text-white tabular-nums`}>
-                                            {localMetrics.suggestion.pace.replace(/\/km|['"]/g, '').split("'")[0]}<span className="text-lg">'{localMetrics.suggestion.pace.split("'")[1]?.replace('"', '') || '00'}</span>
+                                            {localMetrics.suggestion.pace.replace(/\/km|['"]/g, '').split("'")[0]}<span className="text-lg">&apos;{localMetrics.suggestion.pace.split("'")[1]?.replace('"', '') || '00'}</span>
                                         </span>
                                         <span className="text-[10px] text-zinc-600">分钟/公里</span>
                                     </div>

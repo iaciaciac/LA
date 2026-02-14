@@ -40,7 +40,7 @@ const Mylifed = () => {
                   <span className="font-bold">He</span>y
                 </div>
                 <div className="pt-4 pb-2 w-full text-base dark:text-gray-500 text-font-500 font-light">
-                  That's right, I am Cai Cai.
+                  That&apos;s right, I am Cai Cai.
                 </div>
 
                 <div className="flex pt-8 justify-between items-center">

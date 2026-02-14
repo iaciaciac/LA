@@ -1,0 +1,51 @@
+
+> nextjs-blog@0.1.0 build
+> next build
+
+info  - Loaded env from /Users/akstudio/Documents/caicaicai.me/LA/.env.local
+info  - Skipping validation of types
+info  - Skipping linting
+info  - Creating an optimized production build...
+info  - Compiled successfully
+info  - Collecting page data...
+The default export of @sanity/image-url has been deprecated. Use the named export `createImageUrlBuilder` instead.
+The default export of @sanity/image-url has been deprecated. Use the named export `createImageUrlBuilder` instead.
+info  - Generating static pages (0/11)
+info  - Generating static pages (2/11)
+info  - Generating static pages (5/11)
+info  - Generating static pages (8/11)
+info  - Generating static pages (11/11)
+info  - Finalizing page optimization...
+
+Route (pages)                               Size     First Load JS
+┌ ● / (ISR: 60 Seconds) (672 ms)            4.13 kB         107 kB
+├   /_app                                   0 B              97 kB
+├ ○ /404                                    185 B          97.2 kB
+├ λ /api/ai-coach                           0 B              97 kB
+├ λ /api/analyze-photo                      0 B              97 kB
+├ λ /api/hello                              0 B              97 kB
+├ λ /api/running                            0 B              97 kB
+├ λ /api/sync-health                        0 B              97 kB
+├ λ /api/upload-heic                        0 B              97 kB
+├ ● /cai_about (ISR: 1 Seconds) (1942 ms)   7.21 kB         141 kB
+├   └ css/a0850bcf3772b8fb.css              258 B
+├ ○ /cai_coach                              4.03 kB         142 kB
+├ ● /cai_damn (ISR: 1 Seconds) (1464 ms)    14.5 kB         157 kB
+├ ● /cai_photos (ISR: 1 Seconds) (1449 ms)  2.93 kB         102 kB
+├ ○ /cai_power                              11.6 kB         112 kB
+├ ○ /cai_run                                67.8 kB         216 kB
+├   └ css/54b75652b2ff305f.css              10 kB
+├ ○ /cai_run_archive                        5.13 kB         150 kB
+└ ○ /studio/[[...index]]                    1.45 MB        1.57 MB
++ First Load JS shared by all               112 kB
+  ├ chunks/framework-9179c48fcc5b9feb.js    66.8 kB
+  ├ chunks/main-c153213c7e118941.js         26.9 kB
+  ├ chunks/pages/_app-1711f96cff35cad7.js   638 B
+  ├ chunks/webpack-7cae6736d5cdae58.js      2.64 kB
+  └ css/185ec7a58df10cb7.css                15.4 kB
+
+λ  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
+○  (Static)  automatically rendered as static HTML (uses no initial props)
+●  (SSG)     automatically generated as static HTML + JSON (uses getStaticProps)
+   (ISR)     incremental static regeneration (uses revalidate in getStaticProps)
+

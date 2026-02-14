@@ -1,0 +1,19 @@
+
+> nextjs-blog@0.1.0 build
+> next build
+
+info  - Loaded env from /Users/akstudio/Documents/caicaicai.me/LA/.env.local
+info  - Skipping validation of types
+info  - Skipping linting
+info  - Creating an optimized production build...
+info  - Compiled successfully
+info  - Collecting page data...
+The default export of @sanity/image-url has been deprecated. Use the named export `createImageUrlBuilder` instead.
+The default export of @sanity/image-url has been deprecated. Use the named export `createImageUrlBuilder` instead.
+
+> Build optimization failed: found pages without a React Component as default export in 
+pages/components/lutRegistry
+pages/components/utils/lutParser
+
+See https://nextjs.org/docs/messages/page-without-valid-component for more info.
+

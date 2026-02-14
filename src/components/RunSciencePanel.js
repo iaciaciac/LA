@@ -7,7 +7,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { FaRunning, FaTachometerAlt, FaChartLine, FaHeartbeat } from 'react-icons/fa';
-import { analyzeVDOT, calculateTrainingZones, predictRaceTimes, analyzeWeeklyVolume, analyzeAerobicEfficiency, generateTrainingSuggestion } from '../../lib/runScience';
+import { analyzeVDOT, calculateTrainingZones, predictRaceTimes, analyzeWeeklyVolume, analyzeAerobicEfficiency, generateTrainingSuggestion } from '../lib/runScience';
 
 const RunSciencePanel = ({ runs }) => {
     // 本地计算科学指标 (Single Source of Truth)
@@ -101,7 +101,7 @@ const RunSciencePanel = ({ runs }) => {
                                 <span className="text-xs text-zinc-500 uppercase font-bold mb-2">执行配速</span>
                                 <span className="text-4xl font-black text-white tabular-nums">
                                     {metrics.suggestion.pace?.split("'")[0] || '-'}
-                                    <span className="text-xl">'{metrics.suggestion.pace?.split("'")[1]?.replace('"', '') || '00'}</span>
+                                    <span className="text-xl">&apos;{metrics.suggestion.pace?.split("'")[1]?.replace('"', '') || '00'}</span>
                                 </span>
                                 <span className="text-xs text-zinc-600 mt-1">分钟/公里</span>
                             </div>

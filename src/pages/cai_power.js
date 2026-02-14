@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import Navbar from './components/Navbar';
-import HeroText from './components/HeroText';
-import PhotoEditor from './components/PhotoEditor';
+import Navbar from '../components/Navbar';
+import HeroText from '../components/HeroText';
+import PhotoEditor from '../components/PhotoEditor';
 
 export default function CaiPower() {
     const [localImage, setLocalImage] = useState(null);

@@ -1,11 +1,11 @@
 import React from 'react';
-import Navbar from './components/Navbar';
-import ScrollAnimation from './components/ScrollAnimation';
+import Navbar from '../components/Navbar';
+import ScrollAnimation from '../components/ScrollAnimation';
 
 import { client } from '../sanity/lib/client';
 import { groq } from 'next-sanity';
 
-import HeroText from './components/HeroText';
+import HeroText from '../components/HeroText';
 
 // About Page Component (Dynamic CMS)
 function CaiAbout({ pageData }) {
@@ -17,7 +17,7 @@ function CaiAbout({ pageData }) {
       <div>
         <Navbar />
         <div className="pt-32 px-6 text-center text-gray-500 font-light">
-          Content not found. Please create "About Page" in Sanity Studio.
+          Content not found. Please create &quot;About Page&quot; in Sanity Studio.
         </div>
       </div>
     );

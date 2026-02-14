@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { urlFor } from '../../sanity/lib/image';
+import { urlFor } from '../sanity/lib/image';
 
 import PhotoModal from './PhotoModal';
 import ScrollAnimation from './ScrollAnimation';

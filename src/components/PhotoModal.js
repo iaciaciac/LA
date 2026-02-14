@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Image from 'next/image';
-import { urlFor } from '../../sanity/lib/image';
+import { urlFor } from '../sanity/lib/image';
 import { IoClose } from 'react-icons/io5';
 import { FaInstagram } from 'react-icons/fa';
 

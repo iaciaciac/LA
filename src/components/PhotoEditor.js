@@ -3,7 +3,7 @@ import { IoOptionsOutline, IoVideocamOutline, IoFilmOutline, IoCameraOutline, Io
 import { getLutById, LUT_GROUPS } from './lutRegistry';
 import { parseCubeLUT } from './utils/lutParser';
 import LutCanvas from './LutCanvas';
-import { lightning } from '../../lib/ai/lightningLogger';
+import { lightning } from '../lib/ai/lightningLogger';
 
 const PhotoEditor = ({ photo, onPhotoSelect }) => {
     const [adjustments, setAdjustments] = useState({

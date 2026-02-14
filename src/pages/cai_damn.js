@@ -1,8 +1,8 @@
 import React from 'react';
-import Navbar from './components/Navbar';
-import PhotoGallery from './components/PhotoGallery';
-import StoryTray from './components/StoryTray';
-import Typewriter from './components/Typewriter';
+import Navbar from '../components/Navbar';
+import PhotoGallery from '../components/PhotoGallery';
+import StoryTray from '../components/StoryTray';
+import Typewriter from '../components/Typewriter';
 import { client } from '../sanity/lib/client';
 import { groq } from 'next-sanity';
 

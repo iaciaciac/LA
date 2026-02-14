@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import Navbar from './components/Navbar';
+import Navbar from '../components/Navbar';
 import { FaRunning, FaRegCalendarAlt, FaRoad, FaArrowLeft } from 'react-icons/fa';
 // import runData from '../data/nike_runs_transformed.json'; // REMOVED
 import Link from 'next/link';
-import SeasonSummary from './components/SeasonSummary';
-import ScrollAnimation from './components/ScrollAnimation';
-const RunMap = dynamic(() => import('./components/RunMap'), {
+import SeasonSummary from '../components/SeasonSummary';
+import ScrollAnimation from '../components/ScrollAnimation';
+const RunMap = dynamic(() => import('../components/RunMap'), {
     loading: () => <div className="w-full h-full bg-gray-100 dark:bg-zinc-800 animate-pulse" />,
     ssr: false
 });
