@@ -1,0 +1,77 @@
+/* 🌌 Aurora Bento: 2025 Next-Gen UI Material Library */
+
+:root {
+    /* Glassmorphism Tokens */
+    --vibe-glass-bg: rgba(28, 28, 30, 0.55);
+    --vibe-glass-bg-hover: rgba(44, 44, 46, 0.7);
+    --vibe-glass-border: rgba(255, 255, 255, 0.1);
+    --vibe-glass-inner-glow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+
+    /* Spatial Depth */
+    --vibe-shadow-spatial: 0 32px 64px -16px rgba(0, 0, 0, 0.5);
+    --vibe-blur-level: blur(32px) saturate(180%);
+
+    /* Brand Accents (Vision Pro Purple/Blue) */
+    --vibe-accent: #6366f1;
+    --vibe-accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+}
+
+.vibe-glass-card {
+    background: var(--vibe-glass-bg);
+    backdrop-filter: var(--vibe-blur-level);
+    -webkit-backdrop-filter: var(--vibe-blur-level);
+    border: 1px solid var(--vibe-glass-border);
+    box-shadow: var(--vibe-shadow-spatial), var(--vibe-glass-inner-glow);
+    border-radius: 24px;
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.vibe-glass-card:hover {
+    background: var(--vibe-glass-bg-hover);
+    border-color: rgba(255, 255, 255, 0.18);
+    transform: translateY(-4px) scale(1.01);
+}
+
+/* Bento Layout Auxiliaries */
+.vibe-bento-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: minmax(100px, auto);
+    gap: 16px;
+}
+
+/* 4D Icon System (SF Symbols Style) */
+.vibe-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--vibe-accent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.vibe-icon-active {
+    background: var(--vibe-accent-gradient);
+    color: white;
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+/* AI Dynamic Island (靈動島) */
+.vibe-ai-island {
+    padding: 8px 16px;
+    border-radius: 100px;
+    background: #000;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+}

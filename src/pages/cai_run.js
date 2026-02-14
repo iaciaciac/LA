@@ -644,7 +644,7 @@ function CaiRun() {
                                 >
                                     <div className="flex items-center space-x-2 text-[#5CFFA5] mb-2">
                                         <FaRunning className="text-lg" />
-                                        <span className="text-xs font-bold tracking-widest uppercase">Run Details</span>
+                                        <span className="text-xs font-bold tracking-widest uppercase">Recent Activity</span>
                                     </div>
                                     <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
                                         <Link
@@ -713,7 +713,7 @@ function CaiRun() {
                                     <div className="flex items-center justify-between opacity-50">
                                         <div className="flex items-center space-x-2">
                                             <span className="h-px w-8 bg-gray-300 dark:bg-zinc-700"></span>
-                                            <span className="text-xs text-gray-400 uppercase tracking-wider">Fitness+</span>
+                                            <span className="text-xs text-gray-400 uppercase tracking-wider">CAICAI</span>
                                         </div>
                                     </div>
                                 </div>
